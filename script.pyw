@@ -50,6 +50,9 @@ on_state = False
 #- Data file path
 data_file_path = 'data/data.json'
 
+#- Selected palette
+selected_palette_box = None
+
 
 
 ###* GUI functions
@@ -78,8 +81,9 @@ def create_gui(light_info, initial_rgb, initial_bri):
     button_icon_names = ['power-button-off', 'power-button-on']
     button_icons = get_resized_tk_images(path="./images/icons/", image_names=button_icon_names, size=button_icon_size)
 
-    palette_box_image = get_resized_tk_images(path="./images/design/", image_names=["palette_box"], size=palette_box_size)["palette_box"]
-    palette_preview_overlay_image = Image.open("./images/design/overlay.png")#get_resized_images(path="./images/design/", image_names=["overlay"], size=palette_color_preview_size)["overlay"]
+    palette_boxes_names = ['palette_box', 'palette_box_pressed']
+    palette_boxes = get_resized_tk_images(path="./images/design/", image_names=palette_boxes_names, size=palette_box_size)
+    palette_preview_overlay_image = Image.open("./images/design/overlay.png")
 
 
     ##+ Fonts
@@ -182,7 +186,8 @@ def create_gui(light_info, initial_rgb, initial_bri):
     ##+ Palettes
     make_palettes_widget(pady=palette_pady, 
                          max_rows=max_palette_rows,
-                         box_image=palette_box_image, 
+                         box_image=palette_boxes["palette_box"],
+                         box_image_pressed=palette_boxes["palette_box_pressed"],
                          box_size=palette_box_size, 
                          box_padding=palette_box_padding,
                          text_label_size=palette_text_label_size, 
@@ -238,7 +243,7 @@ def get_all_palettes():
     
 
 def make_palettes_widget(pady, max_rows, 
-                         box_image, box_size, box_padding,
+                         box_image, box_image_pressed, box_size, box_padding,
                          text_label_size, font, max_font_size,
                          preview_size, preview_overlay_image):
     
@@ -275,15 +280,16 @@ def make_palettes_widget(pady, max_rows,
                     font=font,
                     max_font_size=max_font_size,
                     box_image=box_image,
+                    box_image_pressed=box_image_pressed,
                     color_preview_image=colored_preview_image)
 
 
 def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
-    outer_frame = tk.Frame(root, borderwidth=1)#, background="red")
+    outer_frame = tk.Frame(root, borderwidth=1)
     outer_frame.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady)
 
-    p_canvas = tk.Canvas(outer_frame, borderwidth=0, height=frame_size)#, background="purple")
-    p_frame = tk.Frame(p_canvas)#, background="blue")
+    p_canvas = tk.Canvas(outer_frame, borderwidth=0, height=frame_size)
+    p_frame = tk.Frame(p_canvas)
     p_scrollbar = tk.Scrollbar(outer_frame, orient="horizontal", command=p_canvas.xview)
     p_canvas.config(xscrollcommand=p_scrollbar.set)
 
@@ -296,31 +302,25 @@ def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
     return p_frame
 
 
-# TODO Bind button event
 # TODO Split long palette names
-def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, box_image, color_preview_image):
+def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, box_image, box_image_pressed, color_preview_image):
     #- Contents
-    box_frame = tk.Frame(frame, borderwidth=0)#, background="green")
-    box = tk.Button(box_frame, image=box_image, border=0)#, background="orange")
-    text_label = tk.Label(box_frame, text=name, font=font, background="white")
-    image_label = tk.Label(box_frame, image=color_preview_image, background="white")
+    box_frame = tk.Frame(frame, borderwidth=0)
+    box = tk.Label(box_frame, image=box_image, border=0, cursor="hand2")
+    text_label = tk.Label(box_frame, text=name, font=font, background="white", cursor="hand2")
+    image_label = tk.Label(box_frame, image=color_preview_image, background="white", cursor="hand2")
     image_label.image = color_preview_image
 
     #- Content placement
     box_frame.grid(row=row, column=column, padx=(0, padding), pady=(0, padding))
     box.grid(row=0, column=0, rowspan=2)
     text_label.grid(row=0, column=0, sticky="N", pady=(20, 0))
-    image_label.grid(row=1, column=0, sticky="S", pady=(0, 15))
+    image_label.grid(row=1, column=0, sticky="S", pady=(0, 20))
 
     #- Events
-    # onoff_button["command"] = lambda: press_light_button(onoff_button, button_icons["power-button-on"], button_icons["power-button-off"])
-    # bri_scale.bind("<ButtonRelease-1>", lambda _event: bri_slider_update(bri_scale["value"], bri_val_label, release=True))
-    box["command"] = lambda: press_palette()
-    text_label.bind("<ButtonRelease-1>", lambda _event: box.invoke())
-    image_label.bind("<ButtonRelease-1>", lambda _event: box.invoke())
-
-    #text_label["command"] = lambda: press_palette()
-    #image_label["command"] = lambda: press_palette()
+    box.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
+    text_label.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
+    image_label.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
 
     approximate_font_size(text_label, label_size, font, max_font_size)
 
@@ -329,8 +329,31 @@ def on_frame_configure(canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
 
-def press_palette():
-    print(press_palette)
+# TODO What to do when unclicking a palette
+def press_release_palette(name, box, images):    
+    global selected_palette_box
+
+    #- Unclick this palette
+    if selected_palette_box == box:
+        box.configure(image=images[0])
+        box.image = images[0]
+        selected_palette_box = None
+        # ?
+        return
+    
+    #- Unclick other palette
+    if selected_palette_box != None:
+        selected_palette_box.configure(image=images[0])
+        selected_palette_box.image = images[0]
+
+    #- Click this palette
+    box.configure(image=images[1])
+    box.image = images[1]
+    selected_palette_box = box
+
+    #- Load palette
+    load_palette(name)
+
 
 
 def get_colored_image(data, size, overlay_image):
@@ -372,6 +395,25 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
 
     if t_size > max_font_size:
         resizable_font.configure(size=max_font_size)
+
+
+# TODO
+def palette_mouse_down():
+    return
+
+
+def load_palette(name):
+    palette = get_all_palettes()[name]
+    
+    xy = {
+        "x": palette["xy"][0], 
+        "y": palette["xy"][1]
+    }
+
+    change_color(xy)
+    change_brightness(palette["brightness"])
+
+    print(palette)
 
 
 # TODO Should account for different conversion types
