@@ -50,6 +50,9 @@ on_state = False
 #- Data file path
 data_file_path = 'data/data.json'
 
+#- Current paletteless profile
+color_profile = None
+
 #- Selected palette
 selected_palette_box = None
 
@@ -111,6 +114,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
     palette_box_padding = 0
 
     button_pady = 50
+
 
 
     ###* Content
@@ -329,8 +333,10 @@ def on_frame_configure(canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
 
-# TODO What to do when unclicking a palette
 def press_release_palette(name, box, images):    
+    if not get_light_is_on():
+        return
+    
     global selected_palette_box
 
     #- Unclick this palette
@@ -338,7 +344,7 @@ def press_release_palette(name, box, images):
         box.configure(image=images[0])
         box.image = images[0]
         selected_palette_box = None
-        # ?
+        load_color_profile()
         return
     
     #- Unclick other palette
@@ -355,7 +361,7 @@ def press_release_palette(name, box, images):
     load_palette(name)
 
 
-
+#! WARNING: Color conversion assumption
 def get_colored_image(data, size, overlay_image):
     #- Get colors
     x = data["xy"][0]
@@ -397,12 +403,36 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
         resizable_font.configure(size=max_font_size)
 
 
-# TODO
-def palette_mouse_down():
-    return
+# TODO Update window to show a palette is no longer selected (names and sliders)
+def load_color_profile():
+    xy = {
+        "x": color_profile["x"],
+        "y": color_profile["y"]
+    }
+
+    change_color(xy)
+    change_brightness(color_profile["bri"])
 
 
+# TODO Update sliders
+#! WARNING: Color conversion assumption
 def load_palette(name):
+    ##+ Save the current color profile in case it is needed later
+    old_xy = get_xy_point()
+    old_bri = get_brightness()
+    old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
+
+    global color_profile
+    color_profile = {
+        "x": old_xy[0],
+        "y": old_xy[1],
+        "red": old_rgb["red"],
+        "green": old_rgb["green"],
+        "blue": old_rgb["blue"],
+        "bri": old_bri
+    }
+    
+    ##+ Load the selected palette
     palette = get_all_palettes()[name]
     
     xy = {
@@ -413,10 +443,9 @@ def load_palette(name):
     change_color(xy)
     change_brightness(palette["brightness"])
 
-    print(palette)
 
-
-# TODO Should account for different conversion types
+# TODO Should account for color profile
+#! WARNING: Color conversion assumption
 def save_palette(palette_name, red, green, blue, brightness, conversion_type):
     data = get_data_file_dict()
 
@@ -435,6 +464,9 @@ def save_palette(palette_name, red, green, blue, brightness, conversion_type):
             xy['y']
         ],
         "brightness": brightness,
+        "red": red,
+        "green": green,
+        "blue": blue,
         "conversion_type": conversion_type
     }
 
@@ -444,13 +476,16 @@ def save_palette(palette_name, red, green, blue, brightness, conversion_type):
 
     #! update palettes in window
 
-    
+
+# TODO Should account for color_profile
 def remove_palette(palette_name):
     data = get_data_file_dict()
 
     #- Remove palette and save to data file
     data["saved_palettes"].pop(palette_name)
     update_data_file(data)
+
+    #? Load in color_profile
 
 
 
@@ -510,6 +545,7 @@ def change_brightness(bri):
 
 
 # TODO Should account for different conversion types
+#! WARNING: Color conversion assumption
 def color_slider_update(new_value, red, green, blue, val_label, release):
     val_label["text"] = round(float(new_value))
 
@@ -649,7 +685,18 @@ if __name__ == '__main__':
     initial_bri = get_brightness()
 
     #- Get RGB from xy
-    initial_rgb = huespec_xy_and_brightness_to_rgb(get_xy_point(), initial_bri, RGB_D65_conversion=False)
+    xy = get_xy_point()
+    initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
+
+    #- Set the current profile
+    color_profile = {
+        "x": xy[0],
+        "y": xy[1],
+        "red": initial_rgb["red"],
+        "green": initial_rgb["green"],
+        "blue": initial_rgb["blue"],
+        "bri": initial_bri
+    }
 
 
     ##+ Build GUI with initial state information

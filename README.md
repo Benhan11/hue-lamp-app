@@ -3,6 +3,7 @@
 * [Converting between RGB and XY according to HUE](https://github.com/johnciech/PhilipsHueSDK/blob/master/ApplicationDesignNotes/RGB%20to%20xy%20Color%20conversion.md) [(alternate)](https://github.com/benknight/hue-python-rgb-converter/blob/master/rgbxy/__init__.py)
 
 # TODO
+* REVAMP GUI TO CLASS
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options
     * Cutoff at certain green value? Example switch from huespec to colormath at green > 150
