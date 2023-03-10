@@ -15,6 +15,7 @@
     * On hover change the mouse pointer
 * Palettes could include the ones saved in the HUE app as well
 * Focus red/blue or green icons (corresponding to what conversion model is being used)
+* Rework xy-point tuple
 
 
 # Icons
