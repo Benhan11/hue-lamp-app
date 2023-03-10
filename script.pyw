@@ -52,9 +52,46 @@ data_file_path = 'data/data.json'
 
 #- Current paletteless profile
 color_profile = None
+palette_is_selected = False
 
 #- Selected palette
 selected_palette_box = None
+
+
+
+###* Palette class
+
+class palette_wrapper: 
+    def __init__(self, x, y, brightness, red, green, blue, conversion_type):
+        self.x = x
+        self.y = y
+        self.brightness = brightness
+        self.red = red
+        self.green = green
+        self.blue = blue
+        self.conversion_type = conversion_type
+
+    def get_formatted_tuple(self):
+        return self.get_formatted_tuple(self.x,
+                                        self.y,
+                                        self.brightness,
+                                        self.red,
+                                        self.green,
+                                        self.blue,
+                                        self.conversion_type)
+    
+    def get_formatted_tuple(x, y, brightness, red, green, blue, conversion_type):
+        return {
+            "xy": [
+                x,
+                y
+            ],
+            "brightness": brightness,
+            "red": red,
+            "green": green,
+            "blue": blue,
+            "conversion_type": conversion_type
+        }
 
 
 
@@ -242,6 +279,7 @@ def press_light_button(button, icon_on, icon_off):
     button.configure(image=image)
 
 
+#? Palette
 def get_all_palettes():
     return get_data_file_dict()["saved_palettes"]
     
@@ -333,6 +371,7 @@ def on_frame_configure(canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
 
+# TODO Check if palette was selected before
 def press_release_palette(name, box, images):    
     if not get_light_is_on():
         return
@@ -345,6 +384,9 @@ def press_release_palette(name, box, images):
         box.image = images[0]
         selected_palette_box = None
         load_color_profile()
+
+        global palette_is_selected
+        palette_is_selected = False
         return
     
     #- Unclick other palette
@@ -403,34 +445,38 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
         resizable_font.configure(size=max_font_size)
 
 
-# TODO Update window to show a palette is no longer selected (names and sliders)
+# TODO Update sliders
+#? Palette
 def load_color_profile():
     xy = {
-        "x": color_profile["x"],
-        "y": color_profile["y"]
+        "x": color_profile.x,
+        "y": color_profile.y
     }
 
     change_color(xy)
-    change_brightness(color_profile["bri"])
+    change_brightness(color_profile.brightness)
 
 
 # TODO Update sliders
 #! WARNING: Color conversion assumption
+#? Palette
 def load_palette(name):
-    ##+ Save the current color profile in case it is needed later
-    old_xy = get_xy_point()
-    old_bri = get_brightness()
-    old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
 
-    global color_profile
-    color_profile = {
-        "x": old_xy[0],
-        "y": old_xy[1],
-        "red": old_rgb["red"],
-        "green": old_rgb["green"],
-        "blue": old_rgb["blue"],
-        "bri": old_bri
-    }
+    ##+ Save the current color profile if the old one was not a palette
+    global palette_is_selected
+    if not palette_is_selected:
+        old_xy = get_xy_point()
+        old_bri = get_brightness()
+        old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
+
+        global color_profile
+        color_profile = palette_wrapper(x=old_xy[0],
+                                        y=old_xy[1],
+                                        brightness=old_bri,
+                                        red=old_rgb["red"],
+                                        green=old_rgb["green"],
+                                        blue=old_rgb["blue"],
+                                        conversion_type="colormath_d65")
     
     ##+ Load the selected palette
     palette = get_all_palettes()[name]
@@ -443,9 +489,12 @@ def load_palette(name):
     change_color(xy)
     change_brightness(palette["brightness"])
 
+    palette_is_selected = True
+
 
 # TODO Should account for color profile
 #! WARNING: Color conversion assumption
+#? Palette
 def save_palette(palette_name, red, green, blue, brightness, conversion_type):
     data = get_data_file_dict()
 
@@ -453,22 +502,15 @@ def save_palette(palette_name, red, green, blue, brightness, conversion_type):
     if palette_name in data["saved_palettes"]:
         return "Error"
 
-    #! if huespec
-    #! if colormath
-    #! etc
     xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
     
-    palette = {
-        "xy": [
-            xy['x'],
-            xy['y']
-        ],
-        "brightness": brightness,
-        "red": red,
-        "green": green,
-        "blue": blue,
-        "conversion_type": conversion_type
-    }
+    palette = palette_wrapper.get_formatted_tuple(x=xy["x"],
+                                                  y=xy["y"],
+                                                  brightness=brightness,
+                                                  red=red,
+                                                  green=green,
+                                                  blue=blue,
+                                                  conversion_type=conversion_type)
 
     #- Add palette and save to data file
     data["saved_palettes"][palette_name] = palette
@@ -485,7 +527,7 @@ def remove_palette(palette_name):
     data["saved_palettes"].pop(palette_name)
     update_data_file(data)
 
-    #? Load in color_profile
+    #? Load in color_profile when deleted the selected one
 
 
 
@@ -544,7 +586,6 @@ def change_brightness(bri):
     return request_state_change(d)
 
 
-# TODO Should account for different conversion types
 #! WARNING: Color conversion assumption
 def color_slider_update(new_value, red, green, blue, val_label, release):
     val_label["text"] = round(float(new_value))
@@ -668,6 +709,7 @@ def test_whites():
 
 ###* Executes if run as a script
 
+#! WARNING: Color conversion assumption
 if __name__ == '__main__':
 
     ##+ Get and set light information
@@ -689,14 +731,13 @@ if __name__ == '__main__':
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
     #- Set the current profile
-    color_profile = {
-        "x": xy[0],
-        "y": xy[1],
-        "red": initial_rgb["red"],
-        "green": initial_rgb["green"],
-        "blue": initial_rgb["blue"],
-        "bri": initial_bri
-    }
+    color_profile = palette_wrapper.get_formatted_tuple(x=xy[0],
+                                                        y=xy[1],
+                                                        brightness=initial_bri,
+                                                        red=initial_rgb["red"],
+                                                        green=initial_rgb["green"],
+                                                        blue=initial_rgb["blue"],
+                                                        conversion_type="colormath_d65")
 
 
     ##+ Build GUI with initial state information
@@ -723,7 +764,6 @@ if __name__ == '__main__':
     #print(test)
     #remove_palette("King Crimson")
     #####! TESTING !#####
-
 
 
 
