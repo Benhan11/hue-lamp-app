@@ -21,18 +21,6 @@ t0 = time.perf_counter()
 allowed_updates_per_second = 5
 t_update_interval = 1 / allowed_updates_per_second
 
-#- GUI
-root = tk.Tk()
-root.option_add("*font", "CascadiaMono 14")
-w_width = 504
-w_height = 356
-is_resizable = True
-
-#- Exit on 'esc'
-def close(_event):
-    sys.exit()
-root.bind('<Escape>', close)
-
 #- Ben bedroom light
 ben_light = 10
 
@@ -49,6 +37,28 @@ on_state = False
 
 #- Data file path
 data_file_path = 'data/data.json'
+
+
+
+###* GUI
+
+#- Window
+root = tk.Tk()
+root.option_add("*font", "CascadiaMono 14")
+w_width = 504
+w_height = 356
+is_resizable = True
+
+#- Sliders
+r_scale = r_val_label = None
+g_scale = g_val_label = None
+b_scale = b_val_label = None
+bri_scale = bri_val_label = None
+
+#- Exit on 'esc'
+def close(_event):
+    sys.exit()
+root.bind('<Escape>', close)
 
 #- Current paletteless profile
 color_profile = None
@@ -86,10 +96,10 @@ class palette_wrapper:
                 x,
                 y
             ],
-            "brightness": brightness,
-            "red": red,
-            "green": green,
-            "blue": blue,
+            "brightness": int(brightness),
+            "red": int(red),
+            "green": int(green),
+            "blue": int(blue),
             "conversion_type": conversion_type
         }
 
@@ -155,6 +165,11 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
 
     ###* Content
+
+    global r_scale, r_val_label
+    global b_scale, b_val_label
+    global g_scale, g_val_label
+    global bri_scale, bri_val_label
 
     ##+ Red slider
 
@@ -371,7 +386,6 @@ def on_frame_configure(canvas):
     canvas.configure(scrollregion=canvas.bbox("all"))
 
 
-# TODO Check if palette was selected before
 def press_release_palette(name, box, images):    
     if not get_light_is_on():
         return
@@ -445,21 +459,18 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
         resizable_font.configure(size=max_font_size)
 
 
-# TODO Update sliders
-#? Palette
 def load_color_profile():
     xy = {
         "x": color_profile.x,
         "y": color_profile.y
     }
 
+    set_sliders(color_profile.red, color_profile.green, color_profile.blue, color_profile.brightness)
     change_color(xy)
     change_brightness(color_profile.brightness)
 
 
-# TODO Update sliders
 #! WARNING: Color conversion assumption
-#? Palette
 def load_palette(name):
 
     ##+ Save the current color profile if the old one was not a palette
@@ -486,15 +497,29 @@ def load_palette(name):
         "y": palette["xy"][1]
     }
 
+    set_sliders(palette["red"], palette["green"], palette["blue"], palette["brightness"])
     change_color(xy)
     change_brightness(palette["brightness"])
 
     palette_is_selected = True
 
 
+def set_sliders(red, green, blue, brightness):
+    r_scale.set(red)
+    r_val_label.config(text=red)
+
+    g_scale.set(green)
+    g_val_label.config(text=green)
+
+    b_scale.set(blue)
+    b_val_label.config(text=blue)
+
+    bri_scale.set(brightness)
+    bri_val_label.config(text=brightness)
+
+
 # TODO Should account for color profile
 #! WARNING: Color conversion assumption
-#? Palette
 def save_palette(palette_name, red, green, blue, brightness, conversion_type):
     data = get_data_file_dict()
 
@@ -528,6 +553,7 @@ def remove_palette(palette_name):
     update_data_file(data)
 
     #? Load in color_profile when deleted the selected one
+    #load_color_profile()
 
 
 
@@ -593,10 +619,6 @@ def color_slider_update(new_value, red, green, blue, val_label, release):
     if not release and not update_is_allowed():
         return
 
-    #print(f"{red}, {green}, {blue}: {huespec_rgb_to_xy(red, green, blue, False)}")
-    #change_color(huespec_rgb_to_xy(red, green, blue, False))
-    #change_color(huespec_rgb_to_xy(red, green, blue, True))
-    #change_color(colormath_rgb_to_xy(red, green, blue, target_illuminant="d55"))
     change_color(colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")) # Best so far
 
 
@@ -741,7 +763,6 @@ if __name__ == '__main__':
 
 
     ##+ Build GUI with initial state information
-    
     create_gui(light_info, initial_rgb, initial_bri)
 
 
@@ -761,6 +782,7 @@ if __name__ == '__main__':
     #bri_slider_update(0, 0, False, False)
     #get_data_file()
     #test = save_palette("Big Crispy", 255, 0, 0, 155, "colormath_d65")
+    #save_palette("Big Crispy", 255.0, 0.0, 0.0, 155.0, "colormath_d65")
     #print(test)
     #remove_palette("King Crimson")
     #####! TESTING !#####
