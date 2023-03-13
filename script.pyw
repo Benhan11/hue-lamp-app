@@ -46,10 +46,11 @@ data_file_path = 'data/data.json'
 root = tk.Tk()
 root.option_add("*font", "CascadiaMono 14")
 w_width = 504
-w_height = 356
+w_height = 400
 is_resizable = True
 
-#- Sliders
+#- Necessarily global widgets
+palette_name_label = None
 r_scale = r_val_label = None
 g_scale = g_val_label = None
 b_scale = b_val_label = None
@@ -118,6 +119,12 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content config
 
+    ##+ Grid
+
+    row_index = 0
+    max_columns = 3
+
+
     ##+ Content images
 
     slider_icon_size = 20
@@ -166,10 +173,22 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
+    global palette_name_label
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
     global bri_scale, bri_val_label
+
+    ##+
+
+    #- Widget
+    palette_name_label = tk.Label(root, text="Placeholder")
+
+    #- Placement
+    palette_name_label.grid(row=row_index, column=0, columnspan=max_columns)
+
+    row_index += 1
+
 
     ##+ Red slider
 
@@ -179,13 +198,15 @@ def create_gui(light_info, initial_rgb, initial_bri):
     r_val_label = tk.Label(root, width=slider_val_label_width, text=initial_rgb["red"], anchor="e", font=slider_font)
 
     #- Placement
-    r_label.grid(row=0, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_l, 0))
-    r_scale.grid(row=0, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_l, 0))
-    r_val_label.grid(row=0, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_l, 0))
+    r_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_l, 0))
+    r_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_l, 0))
+    r_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_l, 0))
 
     #- Events
     r_scale["command"] = lambda val: color_slider_update(val, r_scale["value"], g_scale["value"], b_scale["value"], r_val_label, release=False)
     r_scale.bind("<ButtonRelease-1>", lambda _event: color_slider_update(r_scale["value"], r_scale["value"], g_scale["value"], b_scale["value"], r_val_label, release=True))
+
+    row_index += 1
 
 
     ##+ Green slider
@@ -196,13 +217,15 @@ def create_gui(light_info, initial_rgb, initial_bri):
     g_val_label = tk.Label(root, width=slider_val_label_width, text=initial_rgb["green"], anchor="e", font=slider_font)
     
     #- Placement
-    g_label.grid(row=1, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_s, 0))
-    g_scale.grid(row=1, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_s, 0))
-    g_val_label.grid(row=1, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_s, 0))
+    g_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_s, 0))
+    g_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_s, 0))
+    g_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_s, 0))
     
     #- Events
     g_scale["command"] = lambda val: color_slider_update(val, r_scale["value"], g_scale["value"], b_scale["value"], g_val_label, False)
     g_scale.bind("<ButtonRelease-1>", lambda _event: color_slider_update(g_scale["value"], r_scale["value"], g_scale["value"], b_scale["value"], g_val_label, release=True))
+
+    row_index += 1
 
 
     ##+ Blue slider
@@ -213,13 +236,15 @@ def create_gui(light_info, initial_rgb, initial_bri):
     b_val_label = tk.Label(root, width=slider_val_label_width, text=initial_rgb["blue"], anchor="e", font=slider_font)
 
     #- Placement    
-    b_label.grid(row=2, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_s, 0))
-    b_scale.grid(row=2, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_s, 0))
-    b_val_label.grid(row=2, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_s, 0))
+    b_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_s, 0))
+    b_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_s, 0))
+    b_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_s, 0))
 
     #- Events
     b_scale["command"] = lambda val: color_slider_update(val, r_scale["value"], g_scale["value"], b_scale["value"], b_val_label, False)
     b_scale.bind("<ButtonRelease-1>", lambda _event: color_slider_update(b_scale["value"], r_scale["value"], g_scale["value"], b_scale["value"], b_val_label, release=True))    
+
+    row_index += 1
 
 
     ##+ Brightness slider
@@ -230,18 +255,22 @@ def create_gui(light_info, initial_rgb, initial_bri):
     bri_val_label = tk.Label(root, width=slider_val_label_width, text=initial_bri, anchor="e", font=slider_font)
 
     #- Placement
-    bri_label.grid(row=3, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_l, 0))
-    bri_scale.grid(row=3, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_l, 0))
-    bri_val_label.grid(row=3, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_l, 0))
+    bri_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_l, 0))
+    bri_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_l, 0))
+    bri_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_l, 0))
 
     #- Events
     bri_scale["command"] = lambda val: bri_slider_update(val, bri_val_label, release=False)
     bri_scale.bind("<ButtonRelease-1>", lambda _event: bri_slider_update(bri_scale["value"], bri_val_label, release=True))
 
+    row_index += 1
+
 
     ##+ Palettes
-    make_palettes_widget(pady=palette_pady, 
+    make_palettes_widget(row_placement=row_index, 
+                         pady=palette_pady, 
                          max_rows=max_palette_rows,
+                         max_columns=max_columns,
                          box_image=palette_boxes["palette_box"],
                          box_image_pressed=palette_boxes["palette_box_pressed"],
                          box_size=palette_box_size, 
@@ -252,28 +281,36 @@ def create_gui(light_info, initial_rgb, initial_bri):
                          preview_size=palette_color_preview_size, 
                          preview_overlay_image=palette_preview_overlay_image)
 
+    row_index += 1
+
 
     ##+ On/Off button
 
     #- Widgets
     onoff_state = "on" if light_info['state']['on'] else "off"
-    onoff_button = tk.Button(root, image=button_icons[f"power-button-{onoff_state}"], border=0)
+    onoff_button = tk.Button(root, image=button_icons[f"power-button-{onoff_state}"], border=0, cursor="hand2")
 
     #- Placement
-    onoff_button.grid(row=6, column=0, pady=(button_pady, 0), columnspan=3)
+    onoff_button.grid(row=row_index, column=0, pady=(button_pady, 0), columnspan=max_columns)
 
     #- Events    
     onoff_button["command"] = lambda: press_light_button(onoff_button, button_icons["power-button-on"], button_icons["power-button-off"])    
 
-
+    row_index += 1
 
 
     #!!! BOUNDARY TEST !!!#
-    #t = tk.Label(root, image=slider_icons["red"]).grid(row=100, column=0, columnspan=3, sticky="E")
+    #t = tk.Label(root, image=slider_icons["red"]).grid(row=100, column=0, columnspan=max_columns, sticky="E")
 
 
     ##+ Run the tkinter window
     root.mainloop()
+
+
+def resize_window(height):
+    global w_height
+    w_height = height
+    root.geometry(f"{w_width}x{w_height}")
 
 
 def get_resized_tk_images(path, image_names, size):
@@ -299,13 +336,11 @@ def get_all_palettes():
     return get_data_file_dict()["saved_palettes"]
     
 
-def make_palettes_widget(pady, max_rows, 
+def make_palettes_widget(row_placement, pady, max_rows, max_columns, 
                          box_image, box_image_pressed, box_size, box_padding,
                          text_label_size, font, max_font_size,
                          preview_size, preview_overlay_image):
     
-    global w_height
-
     palettes = get_all_palettes()
     palettes_count = len(palettes)
 
@@ -317,10 +352,10 @@ def make_palettes_widget(pady, max_rows,
     frame_size = (box_size + box_padding) * rows
 
     #- Resize entire window according to the frame and an offset for the scrollbar
-    w_height = w_height + (frame_size + pady + 17)
-    root.geometry(f"{w_width}x{w_height}")
+    height = w_height + (frame_size + pady + 17)
+    resize_window(height)
 
-    palettes_frame = make_palettes_frame(row=4, column=0, columnspan=3, padx=0, pady=(pady, 0), frame_size=frame_size)
+    palettes_frame = make_palettes_frame(row=row_placement, column=0, columnspan=max_columns, padx=0, pady=(pady, 0), frame_size=frame_size)
 
     for i, (p_name, p_data) in enumerate(palettes.items()):         
         row = math.floor(i / cols_per_row)
