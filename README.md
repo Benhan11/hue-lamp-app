@@ -3,19 +3,19 @@
 * [Converting between RGB and XY according to HUE](https://github.com/johnciech/PhilipsHueSDK/blob/master/ApplicationDesignNotes/RGB%20to%20xy%20Color%20conversion.md) [(alternate)](https://github.com/benknight/hue-python-rgb-converter/blob/master/rgbxy/__init__.py)
 
 # TODO
-* REVAMP GUI TO CLASS
+* Save palette
+* Delete palette
+* Remember if we quit on a palette as it should not become the paletteless profile when starting the application
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options
     * Cutoff at certain green value? Example switch from huespec to colormath at green > 150
 * Saving a palette must keep in mind which conversion model was used
 * Resize text to always fit palette box
     * At characters > x (and more than one word) break line
-* Make the entire palette box clickable (prob bind command to button-1-down event)
-    * Supress the button movement since it is the only part of the widget doing it
-    * On hover change the mouse pointer
 * Palettes could include the ones saved in the HUE app as well
 * Focus red/blue or green icons (corresponding to what conversion model is being used)
 * Rework xy-point tuple
+* Make a new utility class and move relevant code there (palette wrapper, image resizer)
 
 
 # Icons
