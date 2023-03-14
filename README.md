@@ -22,3 +22,5 @@
 * [Saturation Icon](https://www.flaticon.com/free-icon/saturation_7902002?term=saturation&page=1&position=13&origin=tag&related_id=7902002)
 * [Brightness Icon](https://www.flaticon.com/free-icon/sun_606795?term=brightness&page=1&position=4&origin=tag&related_id=606795)
 * [On/Off bulb Icon (Modified by me)](https://www.flaticon.com/free-icon/lightbulb_3176369)
+* [Save Icon](https://www.flaticon.com/free-icon/diskette_2874050?term=save&page=1&position=6&origin=search&related_id=2874050)
+* [Delete Icon](https://www.flaticon.com/free-icon/delete_565491?term=delete&page=1&position=11&origin=search&related_id=565491)

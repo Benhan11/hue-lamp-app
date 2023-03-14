@@ -51,6 +51,7 @@ is_resizable = True
 
 #- Necessarily global widgets
 p_title_label = None
+p_delete_icon = None
 r_scale = r_val_label = None
 g_scale = g_val_label = None
 b_scale = b_val_label = None
@@ -127,10 +128,14 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ##+ Content images
 
+    save_delete_icon_size = 20
     slider_icon_size = 20
     button_icon_size = 40
     palette_box_size = 125
     palette_color_preview_size = 50
+
+    save_delete_icon_names = ['save', 'delete']
+    save_delete_icons = get_resized_tk_images(path="./images/icons/", image_names=save_delete_icon_names, size=save_delete_icon_size)
 
     slider_icon_names = ['red', 'green', 'blue', 'brightness']
     slider_icons = get_resized_tk_images(path="./images/icons/", image_names=slider_icon_names, size=slider_icon_size)
@@ -177,20 +182,34 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
-    global p_title_label
+    global p_title_label, p_delete_icon
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
     global bri_scale, bri_val_label
 
 
-    ##+ Palette title
+    ##+ Palette title, Save, and Delete
 
-    #- Widget
-    p_title_label = tk.Label(root, text="", font=palette_title_font)
+    #- Frame Widget and it's placement
+    p_title_frame = tk.Frame(root, borderwidth="2", relief="solid")
+    p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_label_pady_l, p_title_label_pady_s))
 
-    #- Placement
-    p_title_label.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_label_pady_l, p_title_label_pady_s))
+    # TODO Should be set to a palette if one was selected when quitting last time
+    #- Palette title, Save icon, and Delete icon
+    p_title_label = tk.Label(p_title_frame, text="", font=palette_title_font)
+    p_save_icon = tk.Label(p_title_frame, image=save_delete_icons["save"])
+    p_delete_icon = tk.Label(p_title_frame, image=save_delete_icons["delete"])
+
+    #- Placement within frame
+    p_title_label.grid(row=0, column=0)
+    p_save_icon.grid(row=0, column=1)
+    p_delete_icon.grid(row=0, column=2)
+    if not palette_is_selected:
+        p_delete_icon.grid_remove()
+
+    #- Events
+
 
     row_index += 1
 
@@ -546,10 +565,14 @@ def load_palette(name):
 
 
 def update_gui(name, red, green, blue, brightness):
+    global palette_is_selected, p_delete_icon
+
     if palette_is_selected:
         p_title_label.config(text=name)
+        p_delete_icon.grid()
     else:
         p_title_label.config(text="")
+        p_delete_icon.grid_remove()
     
     r_scale.set(red)
     r_val_label.config(text=red)
