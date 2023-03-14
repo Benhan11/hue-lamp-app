@@ -50,7 +50,7 @@ w_height = 400
 is_resizable = True
 
 #- Necessarily global widgets
-palette_name_label = None
+p_title_label = None
 r_scale = r_val_label = None
 g_scale = g_val_label = None
 b_scale = b_val_label = None
@@ -62,7 +62,7 @@ def close(_event):
 root.bind('<Escape>', close)
 
 #- Current paletteless profile
-color_profile = None
+paletteless_profile = None
 palette_is_selected = False
 
 #- Selected palette
@@ -82,16 +82,16 @@ class palette_wrapper:
         self.blue = blue
         self.conversion_type = conversion_type
 
-    def get_formatted_tuple(self):
-        return self.get_formatted_tuple(self.x,
-                                        self.y,
-                                        self.brightness,
-                                        self.red,
-                                        self.green,
-                                        self.blue,
-                                        self.conversion_type)
+    def get_formatted_dict(self):
+        return self.get_formatted_dict(self.x,
+                                       self.y,
+                                       self.brightness,
+                                       self.red,
+                                       self.green,
+                                       self.blue,
+                                       self.conversion_type)
     
-    def get_formatted_tuple(x, y, brightness, red, green, blue, conversion_type):
+    def get_formatted_dict(x, y, brightness, red, green, blue, conversion_type):
         return {
             "xy": [
                 x,
@@ -144,6 +144,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
 
     ##+ Fonts
+    palette_title_font = ("Cascadia Mono", 13)
     slider_font = ("Cascadia Mono", 12)
     palette_font = ("Cascadia Mono", 10)
     palette_max_font_size = 13
@@ -159,6 +160,9 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ##+ Padding
 
+    p_title_label_pady_l = 30
+    p_title_label_pady_s = 10
+
     slider_padx_s = 25
     slider_padx_l = 50
     slider_pady_s = 4
@@ -173,19 +177,20 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
-    global palette_name_label
+    global p_title_label
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
     global bri_scale, bri_val_label
 
-    ##+
+
+    ##+ Palette title
 
     #- Widget
-    palette_name_label = tk.Label(root, text="Placeholder")
+    p_title_label = tk.Label(root, text="", font=palette_title_font)
 
     #- Placement
-    palette_name_label.grid(row=row_index, column=0, columnspan=max_columns)
+    p_title_label.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_label_pady_l, p_title_label_pady_s))
 
     row_index += 1
 
@@ -198,9 +203,9 @@ def create_gui(light_info, initial_rgb, initial_bri):
     r_val_label = tk.Label(root, width=slider_val_label_width, text=initial_rgb["red"], anchor="e", font=slider_font)
 
     #- Placement
-    r_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(slider_pady_l, 0))
-    r_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(slider_pady_l, 0))
-    r_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(slider_pady_l, 0))
+    r_label.grid(row=row_index, column=0, padx=(slider_padx_l, 0), pady=(0, 0))
+    r_scale.grid(row=row_index, column=1, padx=(slider_padx_s, 0), pady=(0, 0))
+    r_val_label.grid(row=row_index, column=2, padx=(slider_padx_s, slider_padx_l), pady=(0, 0))
 
     #- Events
     r_scale["command"] = lambda val: color_slider_update(val, r_scale["value"], g_scale["value"], b_scale["value"], r_val_label, release=False)
@@ -432,10 +437,11 @@ def press_release_palette(name, box, images):
         box.configure(image=images[0])
         box.image = images[0]
         selected_palette_box = None
-        load_color_profile()
 
         global palette_is_selected
         palette_is_selected = False
+
+        load_paletteless_profile()
         return
     
     #- Unclick other palette
@@ -494,15 +500,15 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
         resizable_font.configure(size=max_font_size)
 
 
-def load_color_profile():
+def load_paletteless_profile():
     xy = {
-        "x": color_profile.x,
-        "y": color_profile.y
+        "x": paletteless_profile.x,
+        "y": paletteless_profile.y
     }
 
-    set_sliders(color_profile.red, color_profile.green, color_profile.blue, color_profile.brightness)
+    update_gui(name=None, red=paletteless_profile.red, green=paletteless_profile.green, blue=paletteless_profile.blue, brightness=paletteless_profile.brightness)
     change_color(xy)
-    change_brightness(color_profile.brightness)
+    change_brightness(paletteless_profile.brightness)
 
 
 #! WARNING: Color conversion assumption
@@ -515,14 +521,14 @@ def load_palette(name):
         old_bri = get_brightness()
         old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
 
-        global color_profile
-        color_profile = palette_wrapper(x=old_xy[0],
-                                        y=old_xy[1],
-                                        brightness=old_bri,
-                                        red=old_rgb["red"],
-                                        green=old_rgb["green"],
-                                        blue=old_rgb["blue"],
-                                        conversion_type="colormath_d65")
+        global paletteless_profile
+        paletteless_profile = palette_wrapper(x=old_xy[0],
+                                              y=old_xy[1],
+                                              brightness=old_bri,
+                                              red=old_rgb["red"],
+                                              green=old_rgb["green"],
+                                              blue=old_rgb["blue"],
+                                              conversion_type="colormath_d65")
     
     ##+ Load the selected palette
     palette = get_all_palettes()[name]
@@ -532,14 +538,19 @@ def load_palette(name):
         "y": palette["xy"][1]
     }
 
-    set_sliders(palette["red"], palette["green"], palette["blue"], palette["brightness"])
+    palette_is_selected = True
+
+    update_gui(name, palette["red"], palette["green"], palette["blue"], palette["brightness"])
     change_color(xy)
     change_brightness(palette["brightness"])
 
-    palette_is_selected = True
 
-
-def set_sliders(red, green, blue, brightness):
+def update_gui(name, red, green, blue, brightness):
+    if palette_is_selected:
+        p_title_label.config(text=name)
+    else:
+        p_title_label.config(text="")
+    
     r_scale.set(red)
     r_val_label.config(text=red)
 
@@ -555,36 +566,36 @@ def set_sliders(red, green, blue, brightness):
 
 # TODO Should account for color profile
 #! WARNING: Color conversion assumption
-def save_palette(palette_name, red, green, blue, brightness, conversion_type):
+def save_palette(name, red, green, blue, brightness, conversion_type):
     data = get_data_file_dict()
 
     #- Already exists
-    if palette_name in data["saved_palettes"]:
+    if name in data["saved_palettes"]:
         return "Error"
 
     xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
     
-    palette = palette_wrapper.get_formatted_tuple(x=xy["x"],
-                                                  y=xy["y"],
-                                                  brightness=brightness,
-                                                  red=red,
-                                                  green=green,
-                                                  blue=blue,
-                                                  conversion_type=conversion_type)
+    palette = palette_wrapper.get_formatted_dict(x=xy["x"],
+                                                 y=xy["y"],
+                                                 brightness=brightness,
+                                                 red=red,
+                                                 green=green,
+                                                 blue=blue,
+                                                 conversion_type=conversion_type)
 
     #- Add palette and save to data file
-    data["saved_palettes"][palette_name] = palette
+    data["saved_palettes"][name] = palette
     update_data_file(data)
 
     #! update palettes in window
 
 
 # TODO Should account for color_profile
-def remove_palette(palette_name):
+def remove_palette(name):
     data = get_data_file_dict()
 
     #- Remove palette and save to data file
-    data["saved_palettes"].pop(palette_name)
+    data["saved_palettes"].pop(name)
     update_data_file(data)
 
     #? Load in color_profile when deleted the selected one
@@ -788,13 +799,13 @@ if __name__ == '__main__':
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
     #- Set the current profile
-    color_profile = palette_wrapper.get_formatted_tuple(x=xy[0],
-                                                        y=xy[1],
-                                                        brightness=initial_bri,
-                                                        red=initial_rgb["red"],
-                                                        green=initial_rgb["green"],
-                                                        blue=initial_rgb["blue"],
-                                                        conversion_type="colormath_d65")
+    paletteless_profile = palette_wrapper.get_formatted_dict(x=xy[0],
+                                                             y=xy[1],
+                                                             brightness=initial_bri,
+                                                             red=initial_rgb["red"],
+                                                             green=initial_rgb["green"],
+                                                             blue=initial_rgb["blue"],
+                                                             conversion_type="colormath_d65")
 
 
     ##+ Build GUI with initial state information
