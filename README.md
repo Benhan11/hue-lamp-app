@@ -3,7 +3,8 @@
 * [Converting between RGB and XY according to HUE](https://github.com/johnciech/PhilipsHueSDK/blob/master/ApplicationDesignNotes/RGB%20to%20xy%20Color%20conversion.md) [(alternate)](https://github.com/benknight/hue-python-rgb-converter/blob/master/rgbxy/__init__.py)
 
 # TODO
-* Save/Delete palette (Next to palette title?) 
+* Save/Delete palette (Next to palette title?)
+    * Paletteless logic and update the ui
 * Remember if we quit on a palette as it should not become the paletteless profile when starting the application
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options

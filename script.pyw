@@ -50,8 +50,10 @@ w_height = 400
 is_resizable = True
 
 #- Necessarily global widgets
-p_title_label = None
-p_delete_icon = None
+p_new_entry_name = tk.StringVar()
+p_new_entry = p_title_label = None
+p_delete_button = None
+
 r_scale = r_val_label = None
 g_scale = g_val_label = None
 b_scale = b_val_label = None
@@ -165,8 +167,10 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ##+ Padding
 
-    p_title_label_pady_l = 30
-    p_title_label_pady_s = 10
+    p_title_frame_pady_l = 30
+    p_title_frame_pady_s = 10
+    p_title_widgets_padx_l = 15
+    p_title_widgets_padx_s = 5
 
     slider_padx_s = 25
     slider_padx_l = 50
@@ -182,34 +186,41 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
-    global p_title_label, p_delete_icon
+    global p_new_entry_name, p_new_entry, p_title_label, p_delete_button
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
     global bri_scale, bri_val_label
 
 
-    ##+ Palette title, Save, and Delete
+    ##+ Palette title/Entry, Save, and Delete
 
     #- Frame Widget and it's placement
-    p_title_frame = tk.Frame(root, borderwidth="2", relief="solid")
-    p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_label_pady_l, p_title_label_pady_s))
+    p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
+    p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_frame_pady_l, p_title_frame_pady_s))
 
     # TODO Should be set to a palette if one was selected when quitting last time
-    #- Palette title, Save icon, and Delete icon
+    #- Palette title/Entry, Save icon, and Delete icon
+    p_new_entry = tk.Entry(p_title_frame, textvariable=p_new_entry_name)
     p_title_label = tk.Label(p_title_frame, text="", font=palette_title_font)
-    p_save_icon = tk.Label(p_title_frame, image=save_delete_icons["save"])
-    p_delete_icon = tk.Label(p_title_frame, image=save_delete_icons["delete"])
+    p_save_button = tk.Button(p_title_frame, image=save_delete_icons["save"], border=0, cursor="hand2")
+    p_delete_button = tk.Button(p_title_frame, image=save_delete_icons["delete"], border=0, cursor="hand2")
 
     #- Placement within frame
-    p_title_label.grid(row=0, column=0)
-    p_save_icon.grid(row=0, column=1)
-    p_delete_icon.grid(row=0, column=2)
+    p_new_entry.grid(row=0, column=0, padx=(0, 0))
+    p_title_label.grid(row=0, column=0, padx=(0, 0))
+    p_save_button.grid(row=0, column=1, padx=(p_title_widgets_padx_l, 0))
+    p_delete_button.grid(row=0, column=2, padx=(p_title_widgets_padx_s, 0))
+
     if not palette_is_selected:
-        p_delete_icon.grid_remove()
+        p_title_label.grid_remove()
+        p_delete_button.grid_remove()
+    else:
+        p_new_entry.grid_remove()
 
     #- Events
-
+    p_save_button["command"] = lambda: save_palette()
+    p_delete_button["command"] = lambda: remove_palette()
 
     row_index += 1
 
@@ -538,6 +549,7 @@ def load_palette(name):
     if not palette_is_selected:
         old_xy = get_xy_point()
         old_bri = get_brightness()
+        # TODO Rework to use the global variables instead
         old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
 
         global paletteless_profile
@@ -565,14 +577,19 @@ def load_palette(name):
 
 
 def update_gui(name, red, green, blue, brightness):
-    global palette_is_selected, p_delete_icon
+    global palette_is_selected, p_delete_button
 
     if palette_is_selected:
+        p_new_entry.grid_remove()
+
         p_title_label.config(text=name)
-        p_delete_icon.grid()
+        p_title_label.grid()
+        p_delete_button.grid()
     else:
-        p_title_label.config(text="")
-        p_delete_icon.grid_remove()
+        p_title_label.grid_remove()
+        p_delete_button.grid_remove()
+
+        p_new_entry.grid()
     
     r_scale.set(red)
     r_val_label.config(text=red)
@@ -589,13 +606,18 @@ def update_gui(name, red, green, blue, brightness):
 
 # TODO Should account for color profile
 #! WARNING: Color conversion assumption
-def save_palette(name, red, green, blue, brightness, conversion_type):
+def save_palette():
     data = get_data_file_dict()
 
+    name = p_new_entry_name.get()
+
+    # TODO Elaborate
     #- Already exists
     if name in data["saved_palettes"]:
         return "Error"
 
+    red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
+    brightness = get_brightness()    
     xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
     
     palette = palette_wrapper.get_formatted_dict(x=xy["x"],
@@ -604,7 +626,7 @@ def save_palette(name, red, green, blue, brightness, conversion_type):
                                                  red=red,
                                                  green=green,
                                                  blue=blue,
-                                                 conversion_type=conversion_type)
+                                                 conversion_type="colormath_d65")
 
     #- Add palette and save to data file
     data["saved_palettes"][name] = palette
@@ -614,15 +636,16 @@ def save_palette(name, red, green, blue, brightness, conversion_type):
 
 
 # TODO Should account for color_profile
-def remove_palette(name):
+def remove_palette():
     data = get_data_file_dict()
+
+    name = p_title_label["text"]
 
     #- Remove palette and save to data file
     data["saved_palettes"].pop(name)
     update_data_file(data)
 
-    #? Load in color_profile when deleted the selected one
-    #load_color_profile()
+    load_paletteless_profile()
 
 
 
@@ -822,6 +845,7 @@ if __name__ == '__main__':
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
     #- Set the current profile
+    # TODO Paletteless profile should always be set to something even if a palette is loaded in on start
     paletteless_profile = palette_wrapper.get_formatted_dict(x=xy[0],
                                                              y=xy[1],
                                                              brightness=initial_bri,
