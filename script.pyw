@@ -51,7 +51,7 @@ is_resizable = True
 
 #- Necessarily global widgets
 p_new_entry_name = tk.StringVar()
-p_new_entry = p_title_label = None
+p_new_entry_frame = p_title_label = None
 p_delete_button = None
 
 r_scale = r_val_label = None
@@ -167,8 +167,8 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ##+ Padding
 
-    p_title_frame_pady_l = 30
-    p_title_frame_pady_s = 10
+    p_title_frame_pady_l = 35
+    p_title_frame_pady_s = 30
     p_title_widgets_padx_l = 15
     p_title_widgets_padx_s = 5
 
@@ -186,7 +186,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
-    global p_new_entry_name, p_new_entry, p_title_label, p_delete_button
+    global p_new_entry_name, p_new_entry_frame, p_title_label, p_delete_button
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
@@ -200,14 +200,20 @@ def create_gui(light_info, initial_rgb, initial_bri):
     p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_frame_pady_l, p_title_frame_pady_s))
 
     # TODO Should be set to a palette if one was selected when quitting last time
-    #- Palette title/Entry, Save icon, and Delete icon
-    p_new_entry = tk.Entry(p_title_frame, textvariable=p_new_entry_name)
+    #- Palette Entry
+    p_new_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
+    p_new_entry = tk.Entry(p_new_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_new_entry_name, font=palette_title_font)
+
+    #- Palette title
     p_title_label = tk.Label(p_title_frame, text="", font=palette_title_font)
+    
+    #- Save/Delete icons
     p_save_button = tk.Button(p_title_frame, image=save_delete_icons["save"], border=0, cursor="hand2")
     p_delete_button = tk.Button(p_title_frame, image=save_delete_icons["delete"], border=0, cursor="hand2")
 
     #- Placement within frame
-    p_new_entry.grid(row=0, column=0, padx=(0, 0))
+    p_new_entry_frame.grid(row=0, column=0, padx=(0, 0))
+    p_new_entry.pack(padx=(4, 0))
     p_title_label.grid(row=0, column=0, padx=(0, 0))
     p_save_button.grid(row=0, column=1, padx=(p_title_widgets_padx_l, 0))
     p_delete_button.grid(row=0, column=2, padx=(p_title_widgets_padx_s, 0))
@@ -216,7 +222,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
         p_title_label.grid_remove()
         p_delete_button.grid_remove()
     else:
-        p_new_entry.grid_remove()
+        p_new_entry_frame.grid_remove()
 
     #- Events
     p_save_button["command"] = lambda: save_palette()
@@ -339,6 +345,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
 
     ##+ Run the tkinter window
+    root.focus()
     root.mainloop()
 
 
@@ -494,10 +501,12 @@ def get_colored_image(data, size, overlay_image):
     x = data["xy"][0]
     y = data["xy"][1]
     bri = data["brightness"]
-    rgb = huespec_xy_and_brightness_to_rgb((x, y), bri, False)
+    red, green, blue = data["red"], data["green"], data["blue"]
+    #rgb = huespec_xy_and_brightness_to_rgb((x, y), bri, False)
     
     #- Make a colored image
-    image = Image.new('RGB', (size, size), (rgb["red"], rgb["green"], rgb["blue"]))
+    #image = Image.new('RGB', (size, size), (rgb["red"], rgb["green"], rgb["blue"]))
+    image = Image.new('RGB', (size, size), (red, green, blue))
 
     #- Smooth corners with an overlay
     overlay_image = overlay_image.resize((size, size), Image.LANCZOS)
@@ -580,7 +589,7 @@ def update_gui(name, red, green, blue, brightness):
     global palette_is_selected, p_delete_button
 
     if palette_is_selected:
-        p_new_entry.grid_remove()
+        p_new_entry_frame.grid_remove()
 
         p_title_label.config(text=name)
         p_title_label.grid()
@@ -589,7 +598,7 @@ def update_gui(name, red, green, blue, brightness):
         p_title_label.grid_remove()
         p_delete_button.grid_remove()
 
-        p_new_entry.grid()
+        p_new_entry_frame.grid()
     
     r_scale.set(red)
     r_val_label.config(text=red)
@@ -604,7 +613,7 @@ def update_gui(name, red, green, blue, brightness):
     bri_val_label.config(text=brightness)
 
 
-# TODO Should account for color profile
+# TODO Update ui
 #! WARNING: Color conversion assumption
 def save_palette():
     data = get_data_file_dict()
@@ -613,8 +622,9 @@ def save_palette():
 
     # TODO Elaborate
     #- Already exists
-    if name in data["saved_palettes"]:
-        return "Error"
+    if name in data["saved_palettes"] or name == "":
+        print("Error")
+        return
 
     red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
     brightness = get_brightness()    
@@ -632,10 +642,10 @@ def save_palette():
     data["saved_palettes"][name] = palette
     update_data_file(data)
 
-    #! update palettes in window
+    # TODO Update palettes in window
 
 
-# TODO Should account for color_profile
+# TODO Update ui
 def remove_palette():
     data = get_data_file_dict()
 
@@ -646,6 +656,8 @@ def remove_palette():
     update_data_file(data)
 
     load_paletteless_profile()
+
+    # TODO Update palettes in window
 
 
 
