@@ -169,8 +169,8 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     p_title_frame_pady_l = 35
     p_title_frame_pady_s = 30
-    p_title_widgets_padx_l = 15
-    p_title_widgets_padx_s = 5
+    p_title_buttons_padx_l = 15
+    p_title_buttons_padx_s = 5
 
     slider_padx_s = 25
     slider_padx_l = 50
@@ -186,7 +186,6 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ###* Content
 
-    global p_new_entry_name, p_new_entry_frame, p_title_label, p_delete_button
     global r_scale, r_val_label
     global b_scale, b_val_label
     global g_scale, g_val_label
@@ -194,40 +193,14 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
 
     ##+ Palette title/Entry, Save, and Delete
-
-    #- Frame Widget and it's placement
-    p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
-    p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(p_title_frame_pady_l, p_title_frame_pady_s))
-
-    # TODO Should be set to a palette if one was selected when quitting last time
-    #- Palette Entry
-    p_new_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
-    p_new_entry = tk.Entry(p_new_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_new_entry_name, font=palette_title_font)
-
-    #- Palette title
-    p_title_label = tk.Label(p_title_frame, text="", font=palette_title_font)
-    
-    #- Save/Delete icons
-    p_save_button = tk.Button(p_title_frame, image=save_delete_icons["save"], border=0, cursor="hand2")
-    p_delete_button = tk.Button(p_title_frame, image=save_delete_icons["delete"], border=0, cursor="hand2")
-
-    #- Placement within frame
-    p_new_entry_frame.grid(row=0, column=0, padx=(0, 0))
-    p_new_entry.pack(padx=(4, 0))
-    p_title_label.grid(row=0, column=0, padx=(0, 0))
-    p_save_button.grid(row=0, column=1, padx=(p_title_widgets_padx_l, 0))
-    p_delete_button.grid(row=0, column=2, padx=(p_title_widgets_padx_s, 0))
-
-    if not palette_is_selected:
-        p_title_label.grid_remove()
-        p_delete_button.grid_remove()
-    else:
-        p_new_entry_frame.grid_remove()
-
-    #- Events
-    p_save_button["command"] = lambda: save_palette()
-    p_delete_button["command"] = lambda: remove_palette()
-
+    make_palette_title_widget(row_index=row_index,
+                              max_columns=max_columns,
+                              title_font=palette_title_font,
+                              frame_pady_l=p_title_frame_pady_l,
+                              frame_pady_s=p_title_frame_pady_s,
+                              button_icons=save_delete_icons,
+                              button_padx_l=p_title_buttons_padx_l,
+                              button_padx_s=p_title_buttons_padx_s)
     row_index += 1
 
 
@@ -371,12 +344,44 @@ def press_light_button(button, icon_on, icon_off):
     is_on = get_light_is_on()
     image = icon_on if is_on else icon_off
     button.configure(image=image)
-
-
-#? Palette
-def get_all_palettes():
-    return get_data_file_dict()["saved_palettes"]
     
+
+def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, frame_pady_s, button_icons, button_padx_l, button_padx_s):
+    global p_new_entry_name, p_new_entry_frame, p_title_label, p_delete_button
+
+    #- Frame Widget and it's placement
+    p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
+    p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(frame_pady_l, frame_pady_s))
+
+    # TODO Should be set to a palette if one was selected when quitting last time
+    #- Palette Entry
+    p_new_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
+    p_new_entry = tk.Entry(p_new_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_new_entry_name, font=title_font)
+
+    #- Palette title
+    p_title_label = tk.Label(p_title_frame, text="", font=title_font)
+    
+    #- Save/Delete icons
+    p_save_button = tk.Button(p_title_frame, image=button_icons["save"], border=0, cursor="hand2")
+    p_delete_button = tk.Button(p_title_frame, image=button_icons["delete"], border=0, cursor="hand2")
+
+    #- Placement within frame
+    p_new_entry_frame.grid(row=0, column=0, padx=(0, 0))
+    p_new_entry.pack(padx=(4, 0))
+    p_title_label.grid(row=0, column=0, padx=(0, 0))
+    p_save_button.grid(row=0, column=1, padx=(button_padx_l, 0))
+    p_delete_button.grid(row=0, column=2, padx=(button_padx_s, 0))
+
+    if not palette_is_selected:
+        p_title_label.grid_remove()
+        p_delete_button.grid_remove()
+    else:
+        p_new_entry_frame.grid_remove()
+
+    #- Events
+    p_save_button["command"] = lambda: save_palette()
+    p_delete_button["command"] = lambda: remove_palette()
+
 
 def make_palettes_widget(row_placement, pady, max_rows, max_columns, 
                          box_image, box_image_pressed, box_size, box_padding,
@@ -548,6 +553,10 @@ def load_paletteless_profile():
     update_gui(name=None, red=paletteless_profile.red, green=paletteless_profile.green, blue=paletteless_profile.blue, brightness=paletteless_profile.brightness)
     change_color(xy)
     change_brightness(paletteless_profile.brightness)
+
+
+def get_all_palettes():
+    return get_data_file_dict()["saved_palettes"]
 
 
 #! WARNING: Color conversion assumption
