@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import ttk, font
 from PIL import Image
 import math
+
 import sys
+sys.path.insert(0, './modules')
 from api_interface import *
 from color_conversion import *
 from utilities import *
