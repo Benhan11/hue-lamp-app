@@ -1,42 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, font
-from PIL import Image, ImageTk
-from color_conversion import *
-import json
-import requests
-import urllib3
+from PIL import Image
 import math
 import sys
-import time
-
-
-
-###* Config
-
-#- Disable unsafe request related warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-#- Slider update rate-limiting
-t0 = time.perf_counter()
-allowed_updates_per_second = 5
-t_update_interval = 1 / allowed_updates_per_second
-
-#- Ben bedroom light
-ben_light = 10
-
-#- HUE bridge username
-f = open('credentials.json')
-username = json.load(f)['username']
-f.close()
-
-#- API-endpoint
-URL = f"https://192.168.1.142/api/{username}"
-
-#- Light on-state
-on_state = False
-
-#- Data file path
-data_file_path = 'data/data.json'
+from api_interface import *
+from color_conversion import *
+from utilities import *
 
 
 
@@ -70,42 +39,6 @@ palette_is_selected = False
 
 #- Selected palette
 selected_palette_box = None
-
-
-
-###* Palette class
-
-class palette_wrapper: 
-    def __init__(self, x, y, brightness, red, green, blue, conversion_type):
-        self.x = x
-        self.y = y
-        self.brightness = brightness
-        self.red = red
-        self.green = green
-        self.blue = blue
-        self.conversion_type = conversion_type
-
-    def get_formatted_dict(self):
-        return self.get_formatted_dict(self.x,
-                                       self.y,
-                                       self.brightness,
-                                       self.red,
-                                       self.green,
-                                       self.blue,
-                                       self.conversion_type)
-    
-    def get_formatted_dict(x, y, brightness, red, green, blue, conversion_type):
-        return {
-            "xy": [
-                x,
-                y
-            ],
-            "brightness": int(brightness),
-            "red": int(red),
-            "green": int(green),
-            "blue": int(blue),
-            "conversion_type": conversion_type
-        }
 
 
 
@@ -244,17 +177,6 @@ def resize_window(height):
     w_height = height
     root.geometry(f"{w_width}x{w_height}")
 
-
-def get_resized_tk_images(path, image_names, size):
-    resized_images = {}
-    for image_name in image_names:
-        img = Image.open(f"{path}{image_name}.png")
-        img = img.resize((size, size), Image.LANCZOS)
-        img_resized = ImageTk.PhotoImage(img)
-        resized_images[image_name] = img_resized
-
-    return resized_images
-    
 
 def press_light_button(button, icon_on, icon_off):
     toggle_light()
@@ -519,26 +441,6 @@ def press_release_palette(name, box, images):
     load_palette(name)
 
 
-#! WARNING: Color conversion assumption
-def get_colored_image(data, size, overlay_image):
-    #- Get colors
-    x = data["xy"][0]
-    y = data["xy"][1]
-    bri = data["brightness"]
-    red, green, blue = data["red"], data["green"], data["blue"]
-    #rgb = huespec_xy_and_brightness_to_rgb((x, y), bri, False)
-    
-    #- Make a colored image
-    #image = Image.new('RGB', (size, size), (rgb["red"], rgb["green"], rgb["blue"]))
-    image = Image.new('RGB', (size, size), (red, green, blue))
-
-    #- Smooth corners with an overlay
-    overlay_image = overlay_image.resize((size, size), Image.LANCZOS)
-    image.paste(overlay_image, (0, 0), overlay_image)
-
-    return ImageTk.PhotoImage(image=image)
-
-
 def approximate_font_size(text_label, label_size, palette_font, max_font_size):
     #- Font resize depending on length of palette text
     original_font = font.Font(family=palette_font[0], size=palette_font[1])
@@ -688,62 +590,6 @@ def remove_palette():
     # TODO Update palettes in window
 
 
-
-###* Request related functions
-
-##+ Get
-
-def get_light_info():
-    r = requests.get(url=f"{URL}/lights/{ben_light}", verify=False)
-    return r.json()
-
-
-def get_light_is_on():
-    light_info = get_light_info()
-    is_on = light_info['state']['on']
-    return is_on
-
-
-def get_xy_point():
-    light_info = get_light_info()
-    xy_point = light_info['state']['xy']
-    return (xy_point[0], xy_point[1])
-
-
-def get_brightness():
-    light_info = get_light_info()
-    brightness = light_info['state']['bri']
-    return brightness
-
-
-##+ Set
-
-def request_state_change(data):
-    d = json.dumps(data)
-    r = requests.put(url=f"{URL}/lights/{ben_light}/state", data=d, verify=False)
-    return r
-
-
-def toggle_light():
-    light_info = get_light_info()
-    on_state = False if (light_info['state']['on']) else True
-    d = {'on': on_state}
-    return request_state_change(d)
-
-
-def change_color(xy):
-    d = {'xy': [
-            xy['x'],
-            xy['y']
-        ]}
-    return request_state_change(d)
-
-
-def change_brightness(bri):
-    d = {'bri': int(bri)}
-    return request_state_change(d)
-
-
 #! WARNING: Color conversion assumption
 def color_slider_update(new_value, red, green, blue, val_label, release):
     val_label["text"] = round(float(new_value))
@@ -764,32 +610,6 @@ def bri_slider_update(new_value, val_label, release):
         return
     
     change_brightness(rounded_value)
-
-
-
-###* Utility
-
-def update_is_allowed():
-    global t0
-    
-    t1 = time.perf_counter()
-    td = t1 - t0
-
-    if td > t_update_interval:
-        t0 = t1
-        return True
-    return False
-
-
-def get_data_file_dict():
-    f = open(data_file_path, "r")
-    data = json.load(f)
-    return data
-
-
-def update_data_file(data):
-    with open(data_file_path, "w") as data_file:
-        data_file.write(json.dumps(data, indent=4))
 
 
 
