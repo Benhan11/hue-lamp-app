@@ -473,7 +473,9 @@ def load_paletteless_profile():
         "y": paletteless_profile.y
     }
 
-    update_gui(name=None, red=paletteless_profile.red, green=paletteless_profile.green, blue=paletteless_profile.blue, brightness=paletteless_profile.brightness)
+    update_palette_title_gui(name=None)
+    update_sliders_gui(red=paletteless_profile.red, green=paletteless_profile.green, blue=paletteless_profile.blue, brightness=paletteless_profile.brightness)
+    
     change_color(xy)
     change_brightness(paletteless_profile.brightness)
 
@@ -512,12 +514,14 @@ def load_palette(name):
 
     palette_is_selected = True
 
-    update_gui(name, palette["red"], palette["green"], palette["blue"], palette["brightness"])
+    update_palette_title_gui(name)
+    update_sliders_gui(palette["red"], palette["green"], palette["blue"], palette["brightness"])
+
     change_color(xy)
     change_brightness(palette["brightness"])
 
 
-def update_gui(name, red, green, blue, brightness):
+def update_palette_title_gui(name):
     global palette_is_selected, p_delete_button
 
     if palette_is_selected:
@@ -532,6 +536,8 @@ def update_gui(name, red, green, blue, brightness):
 
         p_new_entry_frame.grid()
     
+
+def update_sliders_gui(red, green, blue, brightness):
     r_scale.set(red)
     r_val_label.config(text=red)
 
@@ -543,6 +549,11 @@ def update_gui(name, red, green, blue, brightness):
 
     bri_scale.set(brightness)
     bri_val_label.config(text=brightness)
+
+
+# TODO
+def update_palettes_gui():
+    return
 
 
 # TODO Update ui
