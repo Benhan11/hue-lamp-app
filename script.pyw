@@ -19,6 +19,8 @@ root.option_add("*font", "CascadiaMono 14")
 w_width = 504
 w_height = 400
 is_resizable = True
+resized_for_palettes = False
+
 
 #- Necessarily global widgets
 p_new_entry_name = tk.StringVar()
@@ -30,14 +32,19 @@ g_scale = g_val_label = None
 b_scale = b_val_label = None
 bri_scale = bri_val_label = None
 
+palettes_frame = None
+
+
 #- Exit on 'esc'
 def close(_event):
     sys.exit()
 root.bind('<Escape>', close)
 
+
 #- Current paletteless profile
 paletteless_profile = None
 palette_is_selected = False
+
 
 #- Selected palette
 selected_palette_box = None
@@ -143,20 +150,22 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     
     ##+ Palettes
-    row_index = make_palettes_widget(row_index=row_index, 
-                         pady=palette_pady, 
-                         max_rows=max_palette_rows,
-                         max_columns=max_columns,
-                         box_image=palette_boxes["palette_box"],
-                         box_image_pressed=palette_boxes["palette_box_pressed"],
-                         box_size=palette_box_size, 
-                         box_padding=palette_box_padding,
-                         text_label_size=palette_text_label_size, 
-                         font=palette_font, 
-                         max_font_size=palette_max_font_size,
-                         preview_size=palette_color_preview_size, 
-                         preview_overlay_image=palette_preview_overlay_image)
-
+    palette_index = row_index
+    root.bind("<<generate-palettes>>", lambda _event: make_palettes_widget(row_index=palette_index, 
+                                                                           pady=palette_pady, 
+                                                                           max_rows=max_palette_rows,
+                                                                           max_columns=max_columns,
+                                                                           box_image=palette_boxes["palette_box"],
+                                                                           box_image_pressed=palette_boxes["palette_box_pressed"],
+                                                                           box_size=palette_box_size, 
+                                                                           box_padding=palette_box_padding,
+                                                                           text_label_size=palette_text_label_size, 
+                                                                           font=palette_font, 
+                                                                           max_font_size=palette_max_font_size,
+                                                                           preview_size=palette_color_preview_size, 
+                                                                           preview_overlay_image=palette_preview_overlay_image))
+    root.event_generate("<<generate-palettes>>")
+    row_index += 1
 
     ##+ On/Off button
     row_index = make_on_off_button_widget(row_index=row_index, 
@@ -329,6 +338,8 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
                          text_label_size, font, max_font_size,
                          preview_size, preview_overlay_image):
     
+    global palettes_frame, resized_for_palettes
+
     palettes = get_all_palettes()
     palettes_count = len(palettes)
 
@@ -340,8 +351,10 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
     frame_size = (box_size + box_padding) * rows
 
     #- Resize entire window according to the frame and an offset for the scrollbar
-    height = w_height + (frame_size + pady + 17)
-    resize_window(height)
+    if not resized_for_palettes:
+        height = w_height + (frame_size + pady + 17)
+        resize_window(height)
+        resized_for_palettes = True
 
     palettes_frame = make_palettes_frame(row=row_index, column=0, columnspan=max_columns, padx=0, pady=(pady, 0), frame_size=frame_size)
 
@@ -363,8 +376,6 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
                     box_image_pressed=box_image_pressed,
                     color_preview_image=colored_preview_image)
         
-    return row_index + 1
-
 
 def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
     outer_frame = tk.Frame(root, borderwidth=1)
@@ -435,6 +446,7 @@ def press_release_palette(name, box, images):
         selected_palette_box.image = images[0]
 
     #- Click this palette
+    #select_palette_box(box)
     box.configure(image=images[1])
     box.image = images[1]
     selected_palette_box = box
@@ -475,7 +487,7 @@ def load_paletteless_profile():
 
     update_palette_title_gui(name=None)
     update_sliders_gui(red=paletteless_profile.red, green=paletteless_profile.green, blue=paletteless_profile.blue, brightness=paletteless_profile.brightness)
-    
+
     change_color(xy)
     change_brightness(paletteless_profile.brightness)
 
@@ -486,7 +498,6 @@ def get_all_palettes():
 
 #! WARNING: Color conversion assumption
 def load_palette(name):
-
     ##+ Save the current color profile if the old one was not a palette
     global palette_is_selected
     if not palette_is_selected:
@@ -551,9 +562,14 @@ def update_sliders_gui(red, green, blue, brightness):
     bri_val_label.config(text=brightness)
 
 
-# TODO
+# TODO Redraw palettes widget
 def update_palettes_gui():
-    return
+    #- Delete the palette frame
+    palettes_frame.grid_forget()
+    palettes_frame.destroy()
+
+    #- Build a new palette frame
+    root.event_generate("<<generate-palettes>>")
 
 
 # TODO Update ui
@@ -586,6 +602,9 @@ def save_palette():
     update_data_file(data)
 
     # TODO Update palettes in window
+    update_palettes_gui()
+
+
 
 
 # TODO Update ui
@@ -601,6 +620,7 @@ def remove_palette():
     load_paletteless_profile()
 
     # TODO Update palettes in window
+    #update_palettes_gui()
 
 
 #! WARNING: Color conversion assumption
