@@ -22,7 +22,7 @@ is_resizable = True
 resized_for_palettes = False
 
 
-#- Necessarily global widgets
+#- Necessarily global widgets and other elements
 p_new_entry_name = tk.StringVar()
 p_new_entry_frame = p_title_label = None
 p_delete_button = None
@@ -33,6 +33,7 @@ b_scale = b_val_label = None
 bri_scale = bri_val_label = None
 
 palettes_frame = None
+palette_box_icons = None
 
 
 #- Exit on 'esc'
@@ -48,6 +49,7 @@ palette_is_selected = False
 
 #- Selected palette
 selected_palette_box = None
+selected_palette_name = None
 
 
 
@@ -86,8 +88,9 @@ def create_gui(light_info, initial_rgb, initial_bri):
     on_off_icon_names = ['power-button-off', 'power-button-on']
     on_off_icons = get_resized_tk_images(path="./images/icons/", image_names=on_off_icon_names, size=on_off_icon_size)
 
-    palette_boxes_names = ['palette_box', 'palette_box_pressed']
-    palette_boxes = get_resized_tk_images(path="./images/design/", image_names=palette_boxes_names, size=palette_box_size)
+    global palette_box_icons
+    palette_box_names = ['palette_box', 'palette_box_pressed']
+    palette_box_icons = get_resized_tk_images(path="./images/design/", image_names=palette_box_names, size=palette_box_size)
     palette_preview_overlay_image = Image.open("./images/design/overlay.png")
 
 
@@ -155,8 +158,6 @@ def create_gui(light_info, initial_rgb, initial_bri):
                                                                            pady=palette_pady, 
                                                                            max_rows=max_palette_rows,
                                                                            max_columns=max_columns,
-                                                                           box_image=palette_boxes["palette_box"],
-                                                                           box_image_pressed=palette_boxes["palette_box_pressed"],
                                                                            box_size=palette_box_size, 
                                                                            box_padding=palette_box_padding,
                                                                            text_label_size=palette_text_label_size, 
@@ -334,7 +335,7 @@ def make_on_off_button_widget(row_index, max_columns, icons, pady):
 
 
 def make_palettes_widget(row_index, pady, max_rows, max_columns, 
-                         box_image, box_image_pressed, box_size, box_padding,
+                         box_size, box_padding,
                          text_label_size, font, max_font_size,
                          preview_size, preview_overlay_image):
     
@@ -372,8 +373,6 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
                     label_size=text_label_size,
                     font=font,
                     max_font_size=max_font_size,
-                    box_image=box_image,
-                    box_image_pressed=box_image_pressed,
                     color_preview_image=colored_preview_image)
         
 
@@ -390,16 +389,16 @@ def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
     p_canvas.pack(side="top", fill="both", expand=True)
     p_canvas.create_window((0, 0), window=p_frame, anchor="w")
 
-    p_frame.bind("<Configure>", lambda _event, canvas=p_canvas: on_frame_configure(canvas))
+    p_frame.bind("<Configure>", lambda _event, canvas=p_canvas: canvas.configure(scrollregion=canvas.bbox("all")))
 
     return p_frame
 
 
 # TODO Split long palette names
-def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, box_image, box_image_pressed, color_preview_image):
+def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, color_preview_image):
     #- Contents
     box_frame = tk.Frame(frame, borderwidth=0)
-    box = tk.Label(box_frame, image=box_image, border=0, cursor="hand2")
+    box = tk.Label(box_frame, image=palette_box_icons["palette_box"], border=0, cursor="hand2")
     text_label = tk.Label(box_frame, text=name, font=font, background="white", cursor="hand2")
     image_label = tk.Label(box_frame, image=color_preview_image, background="white", cursor="hand2")
     image_label.image = color_preview_image
@@ -411,44 +410,47 @@ def make_palette(frame, row, column, padding, name, label_size, font, max_font_s
     image_label.grid(row=1, column=0, sticky="S", pady=(0, 20))
 
     #- Events
-    box.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
-    text_label.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
-    image_label.bind("<ButtonRelease-1>", lambda _event: press_release_palette(name=name, box=box, images=[box_image, box_image_pressed]))
+    func = lambda _event: select_palette(name=name, box=box)
+    box.bind("<ButtonRelease-1>", func)
+    text_label.bind("<ButtonRelease-1>", func)
+    image_label.bind("<ButtonRelease-1>", func)
+
+    #- If this palette was selected when the widget was being made, we should select ourselves
+    global selected_palette_name
+    if selected_palette_name == name:
+        selected_palette_name = None
+        select_palette(name=name, box=box)
 
     approximate_font_size(text_label, label_size, font, max_font_size)
 
 
-def on_frame_configure(canvas):
-    canvas.configure(scrollregion=canvas.bbox("all"))
-
-
-def press_release_palette(name, box, images):    
+def select_palette(name, box):
     if not get_light_is_on():
         return
     
     global selected_palette_box
 
-    #- Unclick this palette
+    #- Unclick this palette / Load paletteless profile
     if selected_palette_box == box:
-        box.configure(image=images[0])
-        box.image = images[0]
-        selected_palette_box = None
+        if name != None:
+            box.configure(image=palette_box_icons["palette_box"])
+            box.image = palette_box_icons["palette_box"]
 
         global palette_is_selected
         palette_is_selected = False
+        selected_palette_box = None
 
         load_paletteless_profile()
         return
     
     #- Unclick other palette
     if selected_palette_box != None:
-        selected_palette_box.configure(image=images[0])
-        selected_palette_box.image = images[0]
+        selected_palette_box.configure(image=palette_box_icons["palette_box"])
+        selected_palette_box.image = palette_box_icons["palette_box"]
 
     #- Click this palette
-    #select_palette_box(box)
-    box.configure(image=images[1])
-    box.image = images[1]
+    box.configure(image=palette_box_icons["palette_box_pressed"])
+    box.image = palette_box_icons["palette_box_pressed"]
     selected_palette_box = box
 
     #- Load palette
@@ -562,7 +564,7 @@ def update_sliders_gui(red, green, blue, brightness):
     bri_val_label.config(text=brightness)
 
 
-# TODO Redraw palettes widget
+# TODO Should make sure the selected palette is in fact selected
 def update_palettes_gui():
     #- Delete the palette frame
     palettes_frame.grid_forget()
@@ -572,7 +574,6 @@ def update_palettes_gui():
     root.event_generate("<<generate-palettes>>")
 
 
-# TODO Update ui
 #! WARNING: Color conversion assumption
 def save_palette():
     data = get_data_file_dict()
@@ -601,9 +602,10 @@ def save_palette():
     data["saved_palettes"][name] = palette
     update_data_file(data)
 
-    # TODO Update palettes in window
-    update_palettes_gui()
+    global selected_palette_name
+    selected_palette_name = name
 
+    update_palettes_gui()
 
 
 
