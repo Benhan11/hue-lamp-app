@@ -7,6 +7,7 @@
     * Paletteless logic and update the ui
     * How to deal with saving a palette that already exists (enter new name? duplicate it?)
 * Remember if we quit on a palette as it should not become the paletteless profile when starting the application
+* Color preview when editing?
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options
     * Cutoff at certain green value? Example switch from huespec to colormath at green > 150
