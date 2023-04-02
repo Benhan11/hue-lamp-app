@@ -484,6 +484,11 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
 
 
 def load_paletteless_profile():
+    global paletteless_profile, palette_is_selected, selected_palette_name, selected_palette_box
+
+    palette_is_selected = False
+    selected_palette_name = selected_palette_box = None
+
     xy = {
         "x": paletteless_profile.x,
         "y": paletteless_profile.y
@@ -636,11 +641,11 @@ def remove_palette():
     data["saved_palettes"].pop(name)
     update_data_file(data)
 
-    #- Update palettes in window
-    update_palettes_gui()
-
     #- Update sliders and title to the paletteless profile
     load_paletteless_profile()
+
+    #- Update palettes in window
+    update_palettes_gui()
 
 
 #! WARNING: Color conversion assumption
