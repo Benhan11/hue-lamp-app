@@ -15,15 +15,16 @@ class palette_wrapper:
         self.conversion_type = conversion_type
 
     def get_formatted_dict(self):
-        return self.get_formatted_dict(self.x,
-                                       self.y,
-                                       self.brightness,
-                                       self.red,
-                                       self.green,
-                                       self.blue,
-                                       self.conversion_type)
+        return self.make_formatted_dict(self.x,
+                                        self.y,
+                                        self.brightness,
+                                        self.red,
+                                        self.green,
+                                        self.blue,
+                                        self.conversion_type)
     
-    def get_formatted_dict(x, y, brightness, red, green, blue, conversion_type):
+    @staticmethod
+    def make_formatted_dict(x, y, brightness, red, green, blue, conversion_type):
         return {
             "xy": [
                 x,
