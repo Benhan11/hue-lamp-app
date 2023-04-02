@@ -8,10 +8,10 @@ class palette_wrapper:
     def __init__(self, x, y, brightness, red, green, blue, conversion_type):
         self.x = x
         self.y = y
-        self.brightness = brightness
-        self.red = red
-        self.green = green
-        self.blue = blue
+        self.brightness = int(brightness)
+        self.red = int(red)
+        self.green = int(green)
+        self.blue = int(blue)
         self.conversion_type = conversion_type
 
     def get_formatted_dict(self):

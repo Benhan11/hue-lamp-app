@@ -505,23 +505,21 @@ def get_all_palettes():
     return get_data_file_dict()["saved_palettes"]
 
 
-#! WARNING: Color conversion assumption
 def load_palette(name):
     ##+ Save the current color profile if the old one was not a palette
     global palette_is_selected
     if not palette_is_selected:
         old_xy = get_xy_point()
         old_bri = get_brightness()
-        # TODO Rework to use the global variables instead
-        old_rgb = huespec_xy_and_brightness_to_rgb(old_xy, old_bri, RGB_D65_conversion=False)
+        red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
 
         global paletteless_profile
         paletteless_profile = palette_wrapper(x=old_xy[0],
                                               y=old_xy[1],
                                               brightness=old_bri,
-                                              red=old_rgb["red"],
-                                              green=old_rgb["green"],
-                                              blue=old_rgb["blue"],
+                                              red=red,
+                                              green=green,
+                                              blue=blue,
                                               conversion_type="colormath_d65")
     
     ##+ Load the selected palette
@@ -588,6 +586,7 @@ def save_palette():
     global selected_palette_name
     name = p_new_entry_name.get() if not palette_is_selected else selected_palette_name
 
+    #! TODO Change this
     if name == "":
         print("Error: No name given")
         return
@@ -764,13 +763,13 @@ if __name__ == '__main__':
 
     #- Set the current profile
     # TODO Paletteless profile should always be set to something even if a palette is loaded in on start
-    paletteless_profile = palette_wrapper.make_formatted_dict(x=xy[0],
-                                                              y=xy[1],
-                                                              brightness=initial_bri,
-                                                              red=initial_rgb["red"],
-                                                              green=initial_rgb["green"],
-                                                              blue=initial_rgb["blue"],
-                                                              conversion_type="colormath_d65")
+    paletteless_profile = palette_wrapper(x=xy[0],
+                                          y=xy[1],
+                                          brightness=initial_bri,
+                                          red=initial_rgb["red"],
+                                          green=initial_rgb["green"],
+                                          blue=initial_rgb["blue"],
+                                          conversion_type="colormath_d65")
 
 
     ##+ Build GUI with initial state information
