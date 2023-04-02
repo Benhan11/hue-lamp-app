@@ -50,6 +50,7 @@ palette_is_selected = False
 #- Selected palette
 selected_palette_box = None
 selected_palette_name = None
+selected_palette_overwritten = False
 
 
 
@@ -444,7 +445,7 @@ def select_palette(name, box):
         return
     
     #- Unclick other palette
-    if selected_palette_box != None:
+    if selected_palette_box != None and not selected_palette_overwritten:
         selected_palette_box.configure(image=palette_box_icons["palette_box"])
         selected_palette_box.image = palette_box_icons["palette_box"]
 
@@ -580,16 +581,12 @@ def save_palette():
 
     name = p_new_entry_name.get()
 
-    # TODO Elaborate
-    #- Already exists
-    if name in data["saved_palettes"] or name == "":
-        print("Error")
-        return
-
+    #- Gather selected values
     red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
     brightness = get_brightness()    
     xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
     
+    #- Format the palette
     palette = palette_wrapper.get_formatted_dict(x=xy["x"],
                                                  y=xy["y"],
                                                  brightness=brightness,
@@ -597,15 +594,24 @@ def save_palette():
                                                  green=green,
                                                  blue=blue,
                                                  conversion_type="colormath_d65")
+    
+    # TODO Trying to save a palette with an already existing name
+    #- If the palette already exists, indicate that we are overwriting it
+    global selected_palette_overwritten
+    if name in data["saved_palettes"]:
+        selected_palette_overwritten = True
 
-    #- Add palette and save to data file
+    #- Add palette to data file
     data["saved_palettes"][name] = palette
     update_data_file(data)
 
+    # TODO
+    #- Select palette
     global selected_palette_name
     selected_palette_name = name
 
     update_palettes_gui()
+    selected_palette_overwritten = False
 
 
 
@@ -619,10 +625,11 @@ def remove_palette():
     data["saved_palettes"].pop(name)
     update_data_file(data)
 
-    load_paletteless_profile()
+    #- Update palettes in window
+    update_palettes_gui()
 
-    # TODO Update palettes in window
-    #update_palettes_gui()
+    #- Update sliders and title to the paletteless profile
+    load_paletteless_profile()
 
 
 #! WARNING: Color conversion assumption
