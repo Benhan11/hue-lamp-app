@@ -581,6 +581,13 @@ def save_palette():
 
     name = p_new_entry_name.get()
 
+    # TODO Save paletteless profile
+    
+
+    if name == "":
+        print("Error: No name given")
+        return
+
     #- Gather selected values
     red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
     brightness = get_brightness()    
@@ -612,7 +619,6 @@ def save_palette():
 
     update_palettes_gui()
     selected_palette_overwritten = False
-
 
 
 # TODO Update ui
