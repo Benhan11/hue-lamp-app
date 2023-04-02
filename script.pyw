@@ -429,7 +429,7 @@ def select_palette(name, box):
     if not get_light_is_on():
         return
     
-    global selected_palette_box
+    global selected_palette_box, selected_palette_name
 
     #- Unclick this palette / Load paletteless profile
     if selected_palette_box == box:
@@ -453,6 +453,7 @@ def select_palette(name, box):
     box.configure(image=palette_box_icons["palette_box_pressed"])
     box.image = palette_box_icons["palette_box_pressed"]
     selected_palette_box = box
+    selected_palette_name = name
 
     #- Load palette
     load_palette(name)
@@ -579,10 +580,8 @@ def update_palettes_gui():
 def save_palette():
     data = get_data_file_dict()
 
-    name = p_new_entry_name.get()
-
-    # TODO Save paletteless profile
-    
+    global selected_palette_name
+    name = p_new_entry_name.get() if not palette_is_selected else selected_palette_name
 
     if name == "":
         print("Error: No name given")
@@ -593,14 +592,21 @@ def save_palette():
     brightness = get_brightness()    
     xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
     
-    #- Format the palette
-    palette = palette_wrapper.get_formatted_dict(x=xy["x"],
-                                                 y=xy["y"],
-                                                 brightness=brightness,
-                                                 red=red,
-                                                 green=green,
-                                                 blue=blue,
-                                                 conversion_type="colormath_d65")
+    #- Make the palette
+    palette = palette_wrapper(x=xy["x"],
+                              y=xy["y"],
+                              brightness=brightness,
+                              red=red,
+                              green=green,
+                              blue=blue,
+                              conversion_type="colormath_d65")
+
+    #- Format the palette to be saved
+    palette_dict = palette.get_formatted_dict()
+    
+    #- Update the paletteless profile
+    global paletteless_profile
+    paletteless_profile = palette
     
     # TODO Trying to save a palette with an already existing name
     #- If the palette already exists, indicate that we are overwriting it
@@ -609,12 +615,11 @@ def save_palette():
         selected_palette_overwritten = True
 
     #- Add palette to data file
-    data["saved_palettes"][name] = palette
+    data["saved_palettes"][name] = palette_dict
     update_data_file(data)
 
     # TODO
     #- Select palette
-    global selected_palette_name
     selected_palette_name = name
 
     update_palettes_gui()
@@ -754,13 +759,13 @@ if __name__ == '__main__':
 
     #- Set the current profile
     # TODO Paletteless profile should always be set to something even if a palette is loaded in on start
-    paletteless_profile = palette_wrapper.get_formatted_dict(x=xy[0],
-                                                             y=xy[1],
-                                                             brightness=initial_bri,
-                                                             red=initial_rgb["red"],
-                                                             green=initial_rgb["green"],
-                                                             blue=initial_rgb["blue"],
-                                                             conversion_type="colormath_d65")
+    paletteless_profile = palette_wrapper.make_formatted_dict(x=xy[0],
+                                                              y=xy[1],
+                                                              brightness=initial_bri,
+                                                              red=initial_rgb["red"],
+                                                              green=initial_rgb["green"],
+                                                              blue=initial_rgb["blue"],
+                                                              conversion_type="colormath_d65")
 
 
     ##+ Build GUI with initial state information
