@@ -4,10 +4,8 @@
 
 # TODO
 * Save/Delete palette (Next to palette title?)
-    * Paletteless logic and update the ui
     * How to deal with saving a palette that already exists (Saving overwrites)
         * Add a duplicate palette button
-* Remember if we quit on a palette as it should not become the paletteless profile when starting the application
 * Color preview when editing?
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options

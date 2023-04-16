@@ -36,12 +36,6 @@ palettes_frame = None
 palette_box_icons = None
 
 
-#- Exit on 'esc'
-def close(_event):
-    sys.exit()
-root.bind('<Escape>', close)
-
-
 #- Current paletteless profile
 paletteless_profile = None
 palette_is_selected = False
@@ -180,6 +174,11 @@ def create_gui(light_info, initial_rgb, initial_bri):
     #t = tk.Label(root, image=slider_icons["red"]).grid(row=100, column=0, columnspan=max_columns, sticky="E")
 
 
+    ##+ Special events
+    root.bind('<Escape>', lambda _event: on_quit())
+    root.protocol('WM_DELETE_WINDOW', on_quit)
+
+
     ##+ Run the tkinter window
     root.focus()
     root.mainloop()
@@ -189,6 +188,11 @@ def resize_window(height):
     global w_height
     w_height = height
     root.geometry(f"{w_width}x{w_height}")
+
+
+def on_quit():
+    save_selected_palette()
+    sys.exit()
 
 
 def press_light_button(button, icon_on, icon_off):
@@ -501,6 +505,16 @@ def load_paletteless_profile():
     change_brightness(paletteless_profile.brightness)
 
 
+def get_pre_selected_palette():
+    return get_data_file_dict()["selected_palette"]
+
+
+def save_selected_palette():
+    data = get_data_file_dict()
+    data["selected_palette"] = selected_palette_name if not selected_palette_name == None else ""
+    update_data_file(data)
+
+
 def get_all_palettes():
     return get_data_file_dict()["saved_palettes"]
 
@@ -588,7 +602,6 @@ def save_palette():
 
     #! TODO Change this
     if name == "":
-        print("Error: No name given")
         return
 
     #- Gather selected values
@@ -630,7 +643,6 @@ def save_palette():
     selected_palette_overwritten = False
 
 
-# TODO Update ui
 def remove_palette():
     data = get_data_file_dict()
 
@@ -762,14 +774,20 @@ if __name__ == '__main__':
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
     #- Set the current profile
+    #! Account for when you quit on paletteless profile
+    pre_selected_palette = get_pre_selected_palette()
+    if not pre_selected_palette == "":
+        selected_palette_name = pre_selected_palette
+
     # TODO Paletteless profile should always be set to something even if a palette is loaded in on start
-    paletteless_profile = palette_wrapper(x=xy[0],
-                                          y=xy[1],
-                                          brightness=initial_bri,
-                                          red=initial_rgb["red"],
-                                          green=initial_rgb["green"],
-                                          blue=initial_rgb["blue"],
-                                          conversion_type="colormath_d65")
+    else:
+        paletteless_profile = palette_wrapper(x=xy[0],
+                                              y=xy[1],
+                                              brightness=initial_bri,
+                                              red=initial_rgb["red"],
+                                              green=initial_rgb["green"],
+                                              blue=initial_rgb["blue"],
+                                              conversion_type="colormath_d65")
 
 
     ##+ Build GUI with initial state information
