@@ -25,7 +25,7 @@ resized_for_palettes = False
 #- Necessarily global widgets and other elements
 p_new_entry_name = tk.StringVar()
 p_new_entry_frame = p_title_label = None
-p_delete_button = None
+p_duplicate_button = p_delete_button = None
 
 r_scale = r_val_label = None
 g_scale = g_val_label = None
@@ -50,7 +50,7 @@ selected_palette_overwritten = False
 
 ###* GUI functions
 
-def create_gui(light_info, initial_rgb, initial_bri):
+def create_gui():
 
     ###* Window config
     root.geometry(f"{w_width}x{w_height}")
@@ -68,19 +68,19 @@ def create_gui(light_info, initial_rgb, initial_bri):
 
     ##+ Content images
 
-    save_delete_icon_size = 20
+    palette_modification_icon_size = 20
     slider_icon_size = 20
     on_off_icon_size = 40
     palette_box_size = 125
     palette_color_preview_size = 50
 
-    save_delete_icon_names = ['save', 'delete']
-    save_delete_icons = get_resized_tk_images(path="./images/icons/", image_names=save_delete_icon_names, size=save_delete_icon_size)
+    palette_modification_icon_names = ['save', 'delete', 'duplicate']
+    palette_modification_icons = get_resized_tk_images(path="./images/icons/", image_names=palette_modification_icon_names, size=palette_modification_icon_size)
 
     slider_icon_names = ['red', 'green', 'blue', 'brightness']
     slider_icons = get_resized_tk_images(path="./images/icons/", image_names=slider_icon_names, size=slider_icon_size)
 
-    on_off_icon_names = ['power-button-off', 'power-button-on']
+    on_off_icon_names = ['power_button_off', 'power_button_on']
     on_off_icons = get_resized_tk_images(path="./images/icons/", image_names=on_off_icon_names, size=on_off_icon_size)
 
     global palette_box_icons
@@ -130,7 +130,7 @@ def create_gui(light_info, initial_rgb, initial_bri):
                                           title_font=palette_title_font,
                                           frame_pady_l=p_title_frame_pady_l,
                                           frame_pady_s=p_title_frame_pady_s,
-                                          button_icons=save_delete_icons,
+                                          button_icons=palette_modification_icons,
                                           button_padx_l=p_title_buttons_padx_l,
                                           button_padx_s=p_title_buttons_padx_s)
 
@@ -203,7 +203,7 @@ def press_light_button(button, icon_on, icon_off):
     
 
 def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, frame_pady_s, button_icons, button_padx_l, button_padx_s):
-    global p_new_entry_name, p_new_entry_frame, p_title_label, p_delete_button
+    global p_new_entry_name, p_new_entry_frame, p_title_label, p_duplicate_button, p_delete_button
 
     #- Frame Widget and it's placement
     p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
@@ -217,25 +217,33 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
     #- Palette title
     p_title_label = tk.Label(p_title_frame, text="", font=title_font)
     
-    #- Save/Delete icons
-    p_save_button = tk.Button(p_title_frame, image=button_icons["save"], border=0, cursor="hand2")
-    p_delete_button = tk.Button(p_title_frame, image=button_icons["delete"], border=0, cursor="hand2")
+    #- Save/Duplicate/Delete icons
+    p_buttons_frame = tk.Frame(p_title_frame, borderwidth="0", relief="solid")
+    p_save_button = tk.Button(p_buttons_frame, image=button_icons["save"], border=0, cursor="hand2")
+    p_duplicate_button = tk.Button(p_buttons_frame, image=button_icons["duplicate"], border=0, cursor="hand2")
+    p_delete_button = tk.Button(p_buttons_frame, image=button_icons["delete"], border=0, cursor="hand2")
 
     #- Placement within frame
     p_new_entry_frame.grid(row=0, column=0, padx=(0, 0))
     p_new_entry.pack(padx=(4, 0))
     p_title_label.grid(row=0, column=0, padx=(0, 0))
-    p_save_button.grid(row=0, column=1, padx=(button_padx_l, 0))
+
+    p_buttons_frame.grid(row=0, column=1, padx=(0, 0))
+    p_save_button.grid(row=0, column=0, padx=(button_padx_l, 0))
+    p_duplicate_button.grid(row=0, column=1, padx=(button_padx_s, 0))
     p_delete_button.grid(row=0, column=2, padx=(button_padx_s, 0))
 
+    #- Conditional rendering of selected palette
     if not palette_is_selected:
         p_title_label.grid_remove()
+        p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
     else:
         p_new_entry_frame.grid_remove()
 
     #- Events
     p_save_button["command"] = lambda: save_palette()
+    p_duplicate_button["command"] = lambda: duplicate_palette()
     p_delete_button["command"] = lambda: remove_palette()
 
     return row_index + 1
@@ -328,13 +336,13 @@ def make_sliders_widget(row_index, icons, font, length, val_label_width, padx_l,
 def make_on_off_button_widget(row_index, max_columns, icons, pady):
     #- Widgets
     onoff_state = "on" if light_info['state']['on'] else "off"
-    onoff_button = tk.Button(root, image=icons[f"power-button-{onoff_state}"], border=0, cursor="hand2")
+    onoff_button = tk.Button(root, image=icons[f"power_button_{onoff_state}"], border=0, cursor="hand2")
 
     #- Placement
     onoff_button.grid(row=row_index, column=0, pady=(pady, 0), columnspan=max_columns)
 
     #- Events    
-    onoff_button["command"] = lambda: press_light_button(onoff_button, icons["power-button-on"], icons["power-button-off"])
+    onoff_button["command"] = lambda: press_light_button(onoff_button, icons["power_button_on"], icons["power_button_off"])
 
     return row_index + 1
 
@@ -423,7 +431,6 @@ def make_palette(frame, row, column, padding, name, label_size, font, max_font_s
     #- If this palette was selected when the widget was being made, we should select ourselves
     global selected_palette_name
     if selected_palette_name == name:
-        selected_palette_name = None
         select_palette(name=name, box=box)
 
     approximate_font_size(text_label, label_size, font, max_font_size)
@@ -554,16 +561,18 @@ def load_palette(name):
 
 
 def update_palette_title_gui(name):
-    global palette_is_selected, p_delete_button
+    global palette_is_selected, p_duplicate_button, p_delete_button
 
     if palette_is_selected:
         p_new_entry_frame.grid_remove()
 
         p_title_label.config(text=name)
         p_title_label.grid()
+        p_duplicate_button.grid()
         p_delete_button.grid()
     else:
         p_title_label.grid_remove()
+        p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
 
         p_new_entry_frame.grid()
@@ -600,7 +609,7 @@ def save_palette():
     global selected_palette_name
     name = p_new_entry_name.get() if not palette_is_selected else selected_palette_name
 
-    #! TODO Change this
+    #! TODO Elaborate on this
     if name == "":
         return
 
@@ -625,7 +634,6 @@ def save_palette():
     global paletteless_profile
     paletteless_profile = palette
     
-    # TODO Trying to save a palette with an already existing name
     #- If the palette already exists, indicate that we are overwriting it
     global selected_palette_overwritten
     if name in data["saved_palettes"]:
@@ -636,8 +644,53 @@ def save_palette():
     update_data_file(data)
 
     # TODO
-    #- Select palette
+    #- Indicate this palette should be selected
     selected_palette_name = name
+
+    update_palettes_gui()
+    selected_palette_overwritten = False
+
+
+# TODO Remove duplicate code between this function and the save palette function
+def duplicate_palette():
+    data = get_data_file_dict()
+    
+    global selected_palette_name, selected_palette_box
+    name = f"{selected_palette_name} (Copy)"
+
+    #- Gather selected values
+    red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
+    brightness = get_brightness()    
+    xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
+    
+    #- Make the palette
+    palette = palette_wrapper(x=xy["x"],
+                              y=xy["y"],
+                              brightness=brightness,
+                              red=red,
+                              green=green,
+                              blue=blue,
+                              conversion_type="colormath_d65")
+
+    #- Format the palette to be saved
+    palette_dict = palette.get_formatted_dict()
+
+    #- Update the paletteless profile
+    global paletteless_profile
+    paletteless_profile = palette
+
+    #- If the palette already exists, indicate that we are overwriting it
+    global selected_palette_overwritten
+    if name in data["saved_palettes"]:
+        selected_palette_overwritten = True
+
+    #- Add palette to data file
+    data["saved_palettes"][name] = palette_dict
+    update_data_file(data)
+    
+    #- Indicate this palette should be selected on reloading of palettes, and that the previous box is no longer set
+    selected_palette_name = name
+    selected_palette_box = None
 
     update_palettes_gui()
     selected_palette_overwritten = False
@@ -790,8 +843,8 @@ if __name__ == '__main__':
                                               conversion_type="colormath_d65")
 
 
-    ##+ Build GUI with initial state information
-    create_gui(light_info, initial_rgb, initial_bri)
+    ##+ Build GUI
+    create_gui()
 
 
 
@@ -811,7 +864,6 @@ if __name__ == '__main__':
     #get_data_file()
     #test = save_palette("Big Crispy", 255, 0, 0, 155, "colormath_d65")
     #save_palette("Big Crispy", 255.0, 0.0, 0.0, 155.0, "colormath_d65")
-    #print(test)
     #remove_palette("King Crimson")
     #####! TESTING !#####
 
