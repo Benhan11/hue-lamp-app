@@ -608,60 +608,51 @@ def update_palettes_gui():
 
 #! WARNING: Color conversion assumption
 def save_palette():
-    data = get_data_file_dict()
+    global selected_palette_name, selected_palette_overwritten, paletteless_profile
 
-    global selected_palette_name
     name = p_title_entry.get() if not palette_is_selected else selected_palette_name
-
-    #! TODO Elaborate on this
+    #- Cancel if no given name
     if name == "":
         return
 
-    #- Gather selected values
-    red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
-    brightness = get_brightness()    
-    xy = colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")
-    
-    #- Make the palette
-    palette = palette_wrapper(x=xy["x"],
-                              y=xy["y"],
-                              brightness=brightness,
-                              red=red,
-                              green=green,
-                              blue=blue,
-                              conversion_type="colormath_d65")
+    #- Add the palette to the file and get a copy of the added palette
+    added_palette = add_current_palette_to_file(name)
 
-    #- Format the palette to be saved
-    palette_dict = palette.get_formatted_dict()
-    
     #- Update the paletteless profile
-    global paletteless_profile
-    paletteless_profile = palette
-    
-    #- If the palette already exists, indicate that we are overwriting it
-    global selected_palette_overwritten
-    if name in data["saved_palettes"]:
-        selected_palette_overwritten = True
-
-    #- Add palette to data file
-    data["saved_palettes"][name] = palette_dict
-    update_data_file(data)
+    paletteless_profile = added_palette
 
     # TODO
     #- Indicate this palette should be selected
     selected_palette_name = name
 
     update_palettes_gui()
+
+    #- Reset overwritten indication after palettes regenerated
     selected_palette_overwritten = False
 
 
-# TODO Remove duplicate code between this function and the save palette function
-def duplicate_palette():
-    data = get_data_file_dict()
-    
-    global selected_palette_name, selected_palette_box
+def duplicate_palette():    
+    global selected_palette_name, selected_palette_overwritten, selected_palette_box, paletteless_profile
+
     name = f"{selected_palette_name} (Copy)"
 
+    #- Add the duplicated palette to the file and get a copy of the palette
+    duplicated_palette = add_current_palette_to_file(name)
+
+    #- Update the paletteless profile
+    paletteless_profile = duplicated_palette
+
+    #- Indicate this palette should be selected on reloading of palettes, and that the previous box is no longer set
+    selected_palette_name = name
+    selected_palette_box = None
+
+    update_palettes_gui()
+
+    #- Reset overwritten indication after palettes regenerated
+    selected_palette_overwritten = False
+
+
+def add_current_palette_to_file(name):
     #- Gather selected values
     red, green, blue = r_scale.get(), g_scale.get(), b_scale.get()
     brightness = get_brightness()    
@@ -678,11 +669,10 @@ def duplicate_palette():
 
     #- Format the palette to be saved
     palette_dict = palette.get_formatted_dict()
-
-    #- Update the paletteless profile
-    global paletteless_profile
-    paletteless_profile = palette
-
+    
+    #- Existing data
+    data = get_data_file_dict()
+    
     #- If the palette already exists, indicate that we are overwriting it
     global selected_palette_overwritten
     if name in data["saved_palettes"]:
@@ -691,13 +681,8 @@ def duplicate_palette():
     #- Add palette to data file
     data["saved_palettes"][name] = palette_dict
     update_data_file(data)
-    
-    #- Indicate this palette should be selected on reloading of palettes, and that the previous box is no longer set
-    selected_palette_name = name
-    selected_palette_box = None
 
-    update_palettes_gui()
-    selected_palette_overwritten = False
+    return palette
 
 
 def remove_palette():
