@@ -513,7 +513,7 @@ def load_paletteless_profile():
     change_brightness(paletteless_profile.brightness)
 
 
-def get_pre_selected_palette():
+def get_pre_selected_palette_name():
     return get_data_file_dict()["selected_palette"]
 
 
@@ -817,19 +817,17 @@ if __name__ == '__main__':
 
     #- Set the current profile
     #! Account for when you quit on paletteless profile
-    pre_selected_palette = get_pre_selected_palette()
-    if not pre_selected_palette == "":
-        selected_palette_name = pre_selected_palette
+    pre_selected_palette_name = get_pre_selected_palette_name()
+    if not pre_selected_palette_name == "":
+        selected_palette_name = pre_selected_palette_name
 
-    # TODO Paletteless profile should always be set to something even if a palette is loaded in on start
-    else:
-        paletteless_profile = palette_wrapper(x=xy[0],
-                                              y=xy[1],
-                                              brightness=initial_bri,
-                                              red=initial_rgb["red"],
-                                              green=initial_rgb["green"],
-                                              blue=initial_rgb["blue"],
-                                              conversion_type="colormath_d65")
+    paletteless_profile = palette_wrapper(x=xy[0],
+                                            y=xy[1],
+                                            brightness=initial_bri,
+                                            red=initial_rgb["red"],
+                                            green=initial_rgb["green"],
+                                            blue=initial_rgb["blue"],
+                                            conversion_type="colormath_d65")
 
 
     ##+ Build GUI
