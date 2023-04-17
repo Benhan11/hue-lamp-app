@@ -23,8 +23,9 @@ resized_for_palettes = False
 
 
 #- Necessarily global widgets and other elements
-p_new_entry_name = tk.StringVar()
-p_new_entry_frame = p_title_label = None
+p_title_entry_frame = None 
+p_title_entry = tk.StringVar()
+p_title_label = None
 p_duplicate_button = p_delete_button = None
 
 r_scale = r_val_label = None
@@ -203,7 +204,7 @@ def press_light_button(button, icon_on, icon_off):
     
 
 def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, frame_pady_s, button_icons, button_padx_l, button_padx_s):
-    global p_new_entry_name, p_new_entry_frame, p_title_label, p_duplicate_button, p_delete_button
+    global p_title_entry, p_title_entry_frame, p_title_label, p_duplicate_button, p_delete_button
 
     #- Frame Widget and it's placement
     p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
@@ -211,8 +212,8 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
 
     # TODO Should be set to a palette if one was selected when quitting last time
     #- Palette Entry
-    p_new_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
-    p_new_entry = tk.Entry(p_new_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_new_entry_name, font=title_font)
+    p_title_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
+    p_new_entry = tk.Entry(p_title_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_title_entry, font=title_font)
 
     #- Palette title
     p_title_label = tk.Label(p_title_frame, text="", font=title_font)
@@ -224,7 +225,7 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
     p_delete_button = tk.Button(p_buttons_frame, image=button_icons["delete"], border=0, cursor="hand2")
 
     #- Placement within frame
-    p_new_entry_frame.grid(row=0, column=0, padx=(0, 0))
+    p_title_entry_frame.grid(row=0, column=0, padx=(0, 0))
     p_new_entry.pack(padx=(4, 0))
     p_title_label.grid(row=0, column=0, padx=(0, 0))
 
@@ -239,7 +240,7 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
         p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
     else:
-        p_new_entry_frame.grid_remove()
+        p_title_entry_frame.grid_remove()
 
     #- Events
     p_save_button["command"] = lambda: save_palette()
@@ -564,7 +565,7 @@ def update_palette_title_gui(name):
     global palette_is_selected, p_duplicate_button, p_delete_button
 
     if palette_is_selected:
-        p_new_entry_frame.grid_remove()
+        p_title_entry_frame.grid_remove()
 
         p_title_label.config(text=name)
         p_title_label.grid()
@@ -575,7 +576,7 @@ def update_palette_title_gui(name):
         p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
 
-        p_new_entry_frame.grid()
+        p_title_entry_frame.grid()
     
 
 def update_sliders_gui(red, green, blue, brightness):
@@ -598,6 +599,9 @@ def update_palettes_gui():
     palettes_frame.grid_forget()
     palettes_frame.destroy()
 
+    #- Clear the title entry
+    p_title_entry.set("")
+
     #- Build a new palette frame
     root.event_generate("<<generate-palettes>>")
 
@@ -607,7 +611,7 @@ def save_palette():
     data = get_data_file_dict()
 
     global selected_palette_name
-    name = p_new_entry_name.get() if not palette_is_selected else selected_palette_name
+    name = p_title_entry.get() if not palette_is_selected else selected_palette_name
 
     #! TODO Elaborate on this
     if name == "":
