@@ -26,7 +26,7 @@ resized_for_palettes = False
 p_title_entry_frame = None 
 p_title_entry = tk.StringVar()
 p_title_label = None
-p_duplicate_button = p_delete_button = None
+p_rename_button = p_save_button = p_duplicate_button = p_delete_button = p_confirm_button = p_cancel_button = None
 
 r_scale = r_val_label = None
 g_scale = g_val_label = None
@@ -75,7 +75,7 @@ def create_gui():
     palette_box_size = 125
     palette_color_preview_size = 50
 
-    palette_modification_icon_names = ['save', 'delete', 'duplicate']
+    palette_modification_icon_names = ['save', 'delete', 'duplicate', 'rename', 'confirm', 'cancel']
     palette_modification_icons = get_resized_tk_images(path="./images/icons/", image_names=palette_modification_icon_names, size=palette_modification_icon_size)
 
     slider_icon_names = ['red', 'green', 'blue', 'brightness']
@@ -204,13 +204,12 @@ def press_light_button(button, icon_on, icon_off):
     
 
 def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, frame_pady_s, button_icons, button_padx_l, button_padx_s):
-    global p_title_entry, p_title_entry_frame, p_title_label, p_duplicate_button, p_delete_button
+    global p_title_entry, p_title_entry_frame, p_title_label, p_rename_button, p_save_button, p_duplicate_button, p_delete_button, p_confirm_button, p_cancel_button
 
     #- Frame Widget and it's placement
     p_title_frame = tk.Frame(root, borderwidth="0", relief="solid")
     p_title_frame.grid(row=row_index, column=0, columnspan=max_columns, pady=(frame_pady_l, frame_pady_s))
 
-    # TODO Should be set to a palette if one was selected when quitting last time
     #- Palette Entry
     p_title_entry_frame = tk.Frame(p_title_frame, borderwidth=1, relief=tk.SUNKEN, background="white")
     p_new_entry = tk.Entry(p_title_entry_frame, borderwidth=1, relief=tk.FLAT, textvariable=p_title_entry, font=title_font)
@@ -220,9 +219,12 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
     
     #- Save/Duplicate/Delete icons
     p_buttons_frame = tk.Frame(p_title_frame, borderwidth="0", relief="solid")
+    p_rename_button = tk.Button(p_buttons_frame, image=button_icons["rename"], border=0, cursor="hand2")
     p_save_button = tk.Button(p_buttons_frame, image=button_icons["save"], border=0, cursor="hand2")
     p_duplicate_button = tk.Button(p_buttons_frame, image=button_icons["duplicate"], border=0, cursor="hand2")
     p_delete_button = tk.Button(p_buttons_frame, image=button_icons["delete"], border=0, cursor="hand2")
+    p_confirm_button = tk.Button(p_buttons_frame, image=button_icons["confirm"], border=0, cursor="hand2")
+    p_cancel_button = tk.Button(p_buttons_frame, image=button_icons["cancel"], border=0, cursor="hand2")
 
     #- Placement within frame
     p_title_entry_frame.grid(row=0, column=0, padx=(0, 0))
@@ -230,22 +232,32 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
     p_title_label.grid(row=0, column=0, padx=(0, 0))
 
     p_buttons_frame.grid(row=0, column=1, padx=(0, 0))
-    p_save_button.grid(row=0, column=0, padx=(button_padx_l, 0))
-    p_duplicate_button.grid(row=0, column=1, padx=(button_padx_s, 0))
-    p_delete_button.grid(row=0, column=2, padx=(button_padx_s, 0))
+    p_rename_button.grid(row=0, column=0, padx=(button_padx_l, 0))
+    p_save_button.grid(row=0, column=1, padx=(button_padx_s, 0))
+    p_duplicate_button.grid(row=0, column=2, padx=(button_padx_s, 0))
+    p_delete_button.grid(row=0, column=3, padx=(button_padx_s, 0))
+
+    p_confirm_button.grid(row=0, column=0, padx=(button_padx_l, 0))
+    p_cancel_button.grid(row=0, column=1, padx=(button_padx_s, 0))
 
     #- Conditional rendering of selected palette
     if not palette_is_selected:
         p_title_label.grid_remove()
+        p_rename_button.grid_remove()
         p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
     else:
         p_title_entry_frame.grid_remove()
+    p_confirm_button.grid_remove()
+    p_cancel_button.grid_remove()
 
     #- Events
-    p_save_button["command"] = lambda: save_palette()
+    p_rename_button["command"] = lambda: toggle_palette_title_and_buttons(is_rename=True)
+    p_save_button["command"] = lambda: save_palette(is_rename=False)
     p_duplicate_button["command"] = lambda: duplicate_palette()
     p_delete_button["command"] = lambda: remove_palette()
+    p_confirm_button["command"] = lambda: rename_palette()
+    p_cancel_button["command"] = lambda: toggle_palette_title_and_buttons(is_rename=False)
 
     return row_index + 1
 
@@ -495,6 +507,20 @@ def approximate_font_size(text_label, label_size, palette_font, max_font_size):
         resizable_font.configure(size=max_font_size)
 
 
+def get_pre_selected_palette_name():
+    return get_data_file_dict()["selected_palette"]
+
+
+def save_selected_palette():
+    data = get_data_file_dict()
+    data["selected_palette"] = selected_palette_name if not selected_palette_name == None else ""
+    update_data_file(data)
+
+
+def get_all_palettes():
+    return get_data_file_dict()["saved_palettes"]
+
+
 def load_paletteless_profile():
     global paletteless_profile, palette_is_selected, selected_palette_name, selected_palette_box
 
@@ -513,22 +539,9 @@ def load_paletteless_profile():
     change_brightness(paletteless_profile.brightness)
 
 
-def get_pre_selected_palette_name():
-    return get_data_file_dict()["selected_palette"]
-
-
-def save_selected_palette():
-    data = get_data_file_dict()
-    data["selected_palette"] = selected_palette_name if not selected_palette_name == None else ""
-    update_data_file(data)
-
-
-def get_all_palettes():
-    return get_data_file_dict()["saved_palettes"]
-
-
 def load_palette(name):
     ##+ Save the current color profile if the old one was not a palette
+
     global palette_is_selected
     if not palette_is_selected:
         old_xy = get_xy_point()
@@ -544,7 +557,9 @@ def load_palette(name):
                                               blue=blue,
                                               conversion_type="colormath_d65")
     
+
     ##+ Load the selected palette
+
     palette = get_all_palettes()[name]
     
     xy = {
@@ -562,22 +577,46 @@ def load_palette(name):
 
 
 def update_palette_title_gui(name):
-    global palette_is_selected, p_duplicate_button, p_delete_button
+    global palette_is_selected
+
+    toggle_palette_title_and_buttons(is_rename=False)
 
     if palette_is_selected:
+        p_title_label.config(text=name)
+    
+
+def toggle_palette_title_and_buttons(is_rename):
+    global palette_is_selected, p_rename_button, p_save_button, p_duplicate_button, p_delete_button, p_confirm_button, p_cancel_button
+
+    if palette_is_selected and not is_rename:
         p_title_entry_frame.grid_remove()
 
-        p_title_label.config(text=name)
         p_title_label.grid()
+        p_rename_button.grid()
+        p_save_button.grid()
         p_duplicate_button.grid()
         p_delete_button.grid()
+
+        p_confirm_button.grid_remove()
+        p_cancel_button.grid_remove()
     else:
         p_title_label.grid_remove()
+        p_rename_button.grid_remove()
         p_duplicate_button.grid_remove()
         p_delete_button.grid_remove()
 
         p_title_entry_frame.grid()
-    
+
+        if is_rename:
+            p_save_button.grid_remove()
+
+            p_confirm_button.grid()
+            p_cancel_button.grid()
+
+        else:
+            p_confirm_button.grid_remove()
+            p_cancel_button.grid_remove()
+
 
 def update_sliders_gui(red, green, blue, brightness):
     r_scale.set(red)
@@ -606,51 +645,48 @@ def update_palettes_gui():
     root.event_generate("<<generate-palettes>>")
 
 
-#! WARNING: Color conversion assumption
-def save_palette():
-    global selected_palette_name, selected_palette_overwritten, paletteless_profile
+def rename_palette():
+    #- The old name
+    global selected_palette_name
 
-    name = p_title_entry.get() if not palette_is_selected else selected_palette_name
+    global p_title_entry
+    if p_title_entry.get() != "":
+        #- Remove old palette from the file
+        remove_palette_from_file(selected_palette_name)
+        
+        #- Save the new palette
+        save_palette(is_rename=True)
+
+    #- Update the title and buttons
+    toggle_palette_title_and_buttons(is_rename=False)
+
+
+#! WARNING: Color conversion assumption
+def save_palette(is_rename):
+    global selected_palette_name
+
+    name = p_title_entry.get() if is_rename or not palette_is_selected else selected_palette_name
     #- Cancel if no given name
     if name == "":
+        print("Here")
         return
 
     #- Add the palette to the file and get a copy of the added palette
     added_palette = add_current_palette_to_file(name)
 
-    #- Update the paletteless profile
-    paletteless_profile = added_palette
-
-    # TODO
-    #- Indicate this palette should be selected
-    selected_palette_name = name
-
-    update_palettes_gui()
-
-    #- Reset overwritten indication after palettes regenerated
-    selected_palette_overwritten = False
+    update_state_after_palette_save(name, added_palette, is_rename_or_duplicate=True if is_rename else False)
 
 
 def duplicate_palette():    
-    global selected_palette_name, selected_palette_overwritten, selected_palette_box, paletteless_profile
+    global selected_palette_name
 
     name = f"{selected_palette_name} (Copy)"
 
     #- Add the duplicated palette to the file and get a copy of the palette
     duplicated_palette = add_current_palette_to_file(name)
 
-    #- Update the paletteless profile
-    paletteless_profile = duplicated_palette
-
-    #- Indicate this palette should be selected on reloading of palettes, and that the previous box is no longer set
-    selected_palette_name = name
-    selected_palette_box = None
-
-    update_palettes_gui()
-
-    #- Reset overwritten indication after palettes regenerated
-    selected_palette_overwritten = False
-
+    update_state_after_palette_save(name, duplicated_palette, is_rename_or_duplicate=True)
+    
 
 def add_current_palette_to_file(name):
     #- Gather selected values
@@ -685,20 +721,42 @@ def add_current_palette_to_file(name):
     return palette
 
 
-def remove_palette():
-    data = get_data_file_dict()
+def update_state_after_palette_save(name, new_palette_profile, is_rename_or_duplicate):
+    global selected_palette_name, selected_palette_box, selected_palette_overwritten, paletteless_profile
 
+    #- Update the paletteless profile
+    paletteless_profile = new_palette_profile
+
+    #- Indicate the new palette should be selected on reloading of palettes
+    selected_palette_name = name
+
+    #- If the saved palette was due to duplication or renaming, the previous box should be nulled as it no longer exists
+    if is_rename_or_duplicate:
+        selected_palette_box = None
+
+    update_palettes_gui()
+
+    #- Reset overwritten indication after palettes regenerated
+    selected_palette_overwritten = False
+
+
+def remove_palette():
     name = p_title_label["text"]
 
     #- Remove palette and save to data file
-    data["saved_palettes"].pop(name)
-    update_data_file(data)
+    remove_palette_from_file(name)
 
     #- Update sliders and title to the paletteless profile
     load_paletteless_profile()
 
     #- Update palettes in window
     update_palettes_gui()
+
+
+def remove_palette_from_file(name):
+    data = get_data_file_dict()
+    data["saved_palettes"].pop(name)
+    update_data_file(data)
 
 
 #! WARNING: Color conversion assumption
@@ -724,7 +782,7 @@ def bri_slider_update(new_value, val_label, release):
 
 
 
-###* Testing
+###* Lamp testing
 
 def between_test(white_transition_color):
     time.sleep(1)
@@ -832,29 +890,3 @@ if __name__ == '__main__':
 
     ##+ Build GUI
     create_gui()
-
-
-
-    #####! TESTING !#####
-    #change_color(colormath_rgb_to_xy(255, 255, 255, "d55"))
-    #change_color(colormath_rgb_to_xy(255, 255, 255, "d65"))
-    #change_color(huespec_rgb_to_xy(255, 255, 255, True))
-    #change_color(huespec_rgb_to_xy(255, 255, 255, False))
-    #change_color(huespec_rgb_to_xy(255, 255, 255, False))
-    #test_rgb("color")
-    #test_rgb("type")
-    #test_whites()
-    #bri_slider_update(0, 0, True, True)
-    #bri_slider_update(0, 0, True, False)
-    #bri_slider_update(0, 0, False, True)
-    #bri_slider_update(0, 0, False, False)
-    #get_data_file()
-    #test = save_palette("Big Crispy", 255, 0, 0, 155, "colormath_d65")
-    #save_palette("Big Crispy", 255.0, 0.0, 0.0, 155.0, "colormath_d65")
-    #remove_palette("King Crimson")
-    #####! TESTING !#####
-
-
-
-
-
