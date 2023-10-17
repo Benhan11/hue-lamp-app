@@ -2,14 +2,16 @@
 * Hue lamps use CIE 1931 color space (Illuminant d65?)
 * [Converting between RGB and XY according to HUE](https://github.com/johnciech/PhilipsHueSDK/blob/master/ApplicationDesignNotes/RGB%20to%20xy%20Color%20conversion.md) [(alternate)](https://github.com/benknight/hue-python-rgb-converter/blob/master/rgbxy/__init__.py)
 
+
 # TODO
+* Approximate font size of title
 * Encapsulate global buttons in a structure
 * Imperfect colors (Colormath d65 seems to be the best so far)
     * Different color options
     * Cutoff at certain green value? Example switch from huespec to colormath at green > 150
 * Saving a palette must keep in mind which conversion model was used
 * Palette name characters > x (and more than one word) break line
-* Palettes could include the ones saved in the HUE app as well
+* Palettes could include the ones saved in the HUE app as well (referenced as "scenes" in the api-data)
 * Focus red/blue or green icons (corresponding to what conversion model is being used)
 * Rework xy-point tuple
 * Clean boiler plate RGB-slider code
