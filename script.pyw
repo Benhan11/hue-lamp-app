@@ -36,6 +36,8 @@ bri_scale = bri_val_label = None
 palettes_frame = None
 palette_box_icons = None
 
+onoff_button = None
+
 
 #- Current paletteless profile
 paletteless_profile = None
@@ -179,6 +181,9 @@ def create_gui():
     root.bind('<Escape>', lambda _event: on_quit())
     root.protocol('WM_DELETE_WINDOW', on_quit)
 
+    root.bind('<Return>', lambda _event: press_light_button(onoff_button, on_off_icons["power_button_on"], on_off_icons["power_button_off"]))
+    root.bind('<space>', lambda _event: press_light_button(onoff_button, on_off_icons["power_button_on"], on_off_icons["power_button_off"]))
+
 
     ##+ Run the tkinter window
     root.focus()
@@ -216,7 +221,18 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
 
     #- Palette title
     p_title_label = tk.Label(p_title_frame, text="", font=title_font)
+
+
+
+    #!
+
+    #test_font = ("Cascadia Mono", 13)
+    #approximate_font_size(p_title_label, 50, test_font, 15)
+
+    #!
     
+
+
     #- Save/Duplicate/Delete icons
     p_buttons_frame = tk.Frame(p_title_frame, borderwidth="0", relief="solid")
     p_rename_button = tk.Button(p_buttons_frame, image=button_icons["rename"], border=0, cursor="hand2")
@@ -347,6 +363,8 @@ def make_sliders_widget(row_index, icons, font, length, val_label_width, padx_l,
 
 
 def make_on_off_button_widget(row_index, max_columns, icons, pady):
+    global onoff_button
+    
     #- Widgets
     onoff_state = "on" if light_info['state']['on'] else "off"
     onoff_button = tk.Button(root, image=icons[f"power_button_{onoff_state}"], border=0, cursor="hand2")
@@ -874,7 +892,6 @@ if __name__ == '__main__':
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
     #- Set the current profile
-    #! Account for when you quit on paletteless profile
     pre_selected_palette_name = get_pre_selected_palette_name()
     if not pre_selected_palette_name == "":
         selected_palette_name = pre_selected_palette_name
