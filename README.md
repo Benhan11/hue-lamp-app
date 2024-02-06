@@ -33,3 +33,14 @@ This application provides a neat application similar to the mobile app provided 
     * [Rename](https://www.flaticon.com/free-icon/edit_3394447?term=rename&page=1&position=10&origin=search&related_id=3394447)
     * [Confirm](https://www.flaticon.com/free-icon/check_9778609?term=confirm&page=1&position=87&origin=search&related_id=9778609)
     * [Cancel (Modified)](https://www.flaticon.com/free-icon/check_9778609?term=confirm&page=1&position=87&origin=search&related_id=9778609)
+
+
+
+### Setup
+
+#### credentials.json (in root)
+{
+    "devicetype": "app_name#device_name",
+    "username": "username",     (generated from HUE api})
+    "ip": "192.168.x.x"         (ip of the device running the app)
+}
