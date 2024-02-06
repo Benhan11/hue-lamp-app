@@ -13,6 +13,10 @@ This application provides a neat application similar to the mobile app provided 
     * Make copy
     * Delete palette
     * Fast selection of palettes
+* Additional settings in code
+    * Change font
+    * Change window dimensions
+    * Toggle resizable
 
 ### Used Icons
 * [Iconarchive](https://iconarchive.com)
