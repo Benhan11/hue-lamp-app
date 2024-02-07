@@ -38,9 +38,16 @@ This application provides a neat application similar to the mobile app provided 
 
 ### Setup
 
+
+
 #### credentials.json (in root)
+```json
 {
     "devicetype": "app_name#device_name",
-    "username": "username",     (generated from HUE api})
+    "username": "username",     (generated from HUE api)
     "ip": "192.168.x.x"         (ip of the device running the app)
 }
+```
+
+#### modules/api_interface.py
+Set ```light_num``` to its corresponding Hue Bridge number
