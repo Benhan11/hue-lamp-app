@@ -18,7 +18,7 @@ root = tk.Tk()
 root.option_add("*font", "CascadiaMono 14")
 w_width = 504
 w_height = 400
-is_resizable = True
+is_resizable = False
 resized_for_palettes = False
 
 
