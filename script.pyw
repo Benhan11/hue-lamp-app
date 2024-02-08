@@ -872,6 +872,9 @@ if __name__ == '__main__':
     xy = get_xy_point()
     initial_rgb = huespec_xy_and_brightness_to_rgb(xy, initial_bri, RGB_D65_conversion=False)
 
+    #- Check that the data json file is formatted correctly and fix accordingly
+    verify_json_data_format()
+
     #- Set the current profile
     pre_selected_palette_name = get_pre_selected_palette_name()
     if not pre_selected_palette_name == "":
