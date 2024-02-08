@@ -166,15 +166,12 @@ def create_gui():
     root.event_generate("<<generate-palettes>>")
     row_index += 1
 
+
     ##+ On/Off button
     row_index = make_on_off_button_widget(row_index=row_index, 
                                           max_columns=max_columns,
                                           icons=on_off_icons,
                                           pady=on_off_pady)
-
-
-    #!!! BOUNDARY TEST !!!#
-    #t = tk.Label(root, image=slider_icons["red"]).grid(row=100, column=0, columnspan=max_columns, sticky="E")
 
 
     ##+ Special events
@@ -221,17 +218,6 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
 
     #- Palette title
     p_title_label = tk.Label(p_title_frame, text="", font=title_font)
-
-
-
-    #!
-
-    #test_font = ("Cascadia Mono", 13)
-    #approximate_font_size(p_title_label, 50, test_font, 15)
-
-    #!
-    
-
 
     #- Save/Duplicate/Delete icons
     p_buttons_frame = tk.Frame(p_title_frame, borderwidth="0", relief="solid")
@@ -438,7 +424,6 @@ def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
     return p_frame
 
 
-# TODO Split long palette names
 def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, color_preview_image):
     #- Contents
     box_frame = tk.Frame(frame, borderwidth=0)
@@ -650,7 +635,6 @@ def update_sliders_gui(red, green, blue, brightness):
     bri_val_label.config(text=brightness)
 
 
-# TODO Should make sure the selected palette is in fact selected
 def update_palettes_gui():
     #- Delete the palette frame
     palettes_frame.grid_forget()
@@ -679,7 +663,6 @@ def rename_palette():
     toggle_palette_title_and_buttons(is_rename=False)
 
 
-#! WARNING: Color conversion assumption
 def save_palette(is_rename):
     global selected_palette_name
 
@@ -777,7 +760,6 @@ def remove_palette_from_file(name):
     update_data_file(data)
 
 
-#! WARNING: Color conversion assumption
 def color_slider_update(new_value, red, green, blue, val_label, release):
     val_label["text"] = round(float(new_value))
 
@@ -870,7 +852,6 @@ def test_whites():
 
 ###* Executes if run as a script
 
-#! WARNING: Color conversion assumption
 if __name__ == '__main__':
 
     ##+ Get and set light information
