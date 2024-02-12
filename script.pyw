@@ -35,6 +35,7 @@ bri_scale = bri_val_label = None
 
 palettes_frame = None
 palette_box_icons = None
+palettes_outer_frame = None
 
 onoff_button = None
 
@@ -242,7 +243,7 @@ def make_palette_title_widget(row_index, max_columns, title_font, frame_pady_l, 
     p_confirm_button.grid(row=0, column=0, padx=(button_padx_l, 0))
     p_cancel_button.grid(row=0, column=1, padx=(button_padx_s, 0))
 
-    #- Conditional rendering of selected palette
+    #- Conditional rendering of selected palette and corresponding buttons
     if not palette_is_selected:
         p_title_label.grid_remove()
         p_rename_button.grid_remove()
@@ -376,18 +377,23 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
 
     cols_per_row = math.ceil(palettes_count / max_rows) if max_rows > 0 else 0
     rows = max_rows if palettes_count >= max_rows else palettes_count
-    if (rows == 0):
-        return
     
-    frame_size = (box_size + box_padding) * rows
+    #- If there are palettes
+    if (rows > 0):
+        frame_size = (box_size + box_padding) * rows
 
-    #- Resize entire window according to the frame and an offset for the scrollbar
-    if not resized_for_palettes:
-        height = w_height + (frame_size + pady + 17)
-        resize_window(height)
-        resized_for_palettes = True
-
+        #- Resize entire window according to the frame and an offset for the scrollbar
+        if not resized_for_palettes:
+            height = w_height + (frame_size + pady + 17)
+            resize_window(height)
+            resized_for_palettes = True
+        
+    #- If there are no palettes
+    else: 
+        frame_size = 0
+        
     palettes_frame = make_palettes_frame(row=row_index, column=0, columnspan=max_columns, padx=0, pady=(pady, 0), frame_size=frame_size)
+    if frame_size == 0: delete_palettes_widget()
 
     for i, (p_name, p_data) in enumerate(palettes.items()):         
         row = math.floor(i / cols_per_row)
@@ -407,12 +413,14 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
         
 
 def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
-    outer_frame = tk.Frame(root, borderwidth=1)
-    outer_frame.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady)
+    global palettes_outer_frame
 
-    p_canvas = tk.Canvas(outer_frame, borderwidth=0, height=frame_size)
+    palettes_outer_frame = tk.Frame(root, borderwidth=1)
+    palettes_outer_frame.grid(row=row, column=column, columnspan=columnspan, padx=padx, pady=pady)
+
+    p_canvas = tk.Canvas(palettes_outer_frame, borderwidth=0, height=frame_size)
     p_frame = tk.Frame(p_canvas)
-    p_scrollbar = tk.Scrollbar(outer_frame, orient="horizontal", command=p_canvas.xview)
+    p_scrollbar = tk.Scrollbar(palettes_outer_frame, orient="horizontal", command=p_canvas.xview)
     p_canvas.config(xscrollcommand=p_scrollbar.set)
 
     p_scrollbar.pack(side="bottom", fill="x")
@@ -422,6 +430,11 @@ def make_palettes_frame(row, column, columnspan, padx, pady, frame_size):
     p_frame.bind("<Configure>", lambda _event, canvas=p_canvas: canvas.configure(scrollregion=canvas.bbox("all")))
 
     return p_frame
+
+
+def delete_palettes_widget():
+    global palettes_outer_frame
+    palettes_outer_frame.destroy()
 
 
 def make_palette(frame, row, column, padding, name, label_size, font, max_font_size, color_preview_image):
@@ -636,14 +649,13 @@ def update_sliders_gui(red, green, blue, brightness):
 
 
 def update_palettes_gui():
-    #- Delete the palette frame
-    palettes_frame.grid_forget()
-    palettes_frame.destroy()
+    #- Delete the palettes frame
+    delete_palettes_widget()
 
     #- Clear the title entry
     p_title_entry.set("")
 
-    #- Build a new palette frame
+    #- Build a new palettes frame
     root.event_generate("<<generate-palettes>>")
 
 
@@ -669,7 +681,6 @@ def save_palette(is_rename):
     name = p_title_entry.get() if is_rename or not palette_is_selected else selected_palette_name
     #- Cancel if no given name
     if name == "":
-        print("Here")
         return
 
     #- Add the palette to the file and get a copy of the added palette
