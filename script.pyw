@@ -377,8 +377,11 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
     cols_per_row = math.ceil(palettes_count / max_rows) if max_rows > 0 else 0
     rows = max_rows if palettes_count >= max_rows else palettes_count
     
+    palettes_exist = rows > 0
+    frame_size = 0
+
     #- If there are palettes
-    if (rows > 0):
+    if palettes_exist:
         frame_size = (box_size + box_padding) * rows
 
         #- Resize entire window according to the frame and an offset for the scrollbar
@@ -387,11 +390,10 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
         
     #- If there are no palettes
     else: 
-        frame_size = 0
         resize_window(w_base_height)
         
     palettes_frame = make_palettes_frame(row=row_index, column=0, columnspan=max_columns, padx=0, pady=(pady, 0), frame_size=frame_size)
-    if frame_size == 0: delete_palettes_widget()
+    if not palettes_exist: delete_palettes_widget()
 
     for i, (p_name, p_data) in enumerate(palettes.items()):         
         row = math.floor(i / cols_per_row)
