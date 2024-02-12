@@ -17,9 +17,8 @@ from utilities import *
 root = tk.Tk()
 root.option_add("*font", "CascadiaMono 14")
 w_width = 504
-w_height = 400
+w_base_height = 400
 is_resizable = False
-resized_for_palettes = False
 
 
 #- Necessarily global widgets and other elements
@@ -57,7 +56,7 @@ selected_palette_overwritten = False
 def create_gui():
 
     ###* Window config
-    root.geometry(f"{w_width}x{w_height}")
+    root.geometry(f"{w_width}x{w_base_height}")
     root.resizable(is_resizable, is_resizable)
     root.title("HUE Lamp Color")
     root.iconbitmap("./images/icons/bulb.ico")
@@ -189,9 +188,9 @@ def create_gui():
 
 
 def resize_window(height):
-    global w_height
-    w_height = height
-    root.geometry(f"{w_width}x{w_height}")
+    #global w_height
+    #w_height = height
+    root.geometry(f"{w_width}x{height}")
 
 
 def on_quit():
@@ -370,7 +369,7 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
                          text_label_size, font, max_font_size,
                          preview_size, preview_overlay_image):
     
-    global palettes_frame, resized_for_palettes
+    global palettes_frame
 
     palettes = get_all_palettes()
     palettes_count = len(palettes)
@@ -383,14 +382,13 @@ def make_palettes_widget(row_index, pady, max_rows, max_columns,
         frame_size = (box_size + box_padding) * rows
 
         #- Resize entire window according to the frame and an offset for the scrollbar
-        if not resized_for_palettes:
-            height = w_height + (frame_size + pady + 17)
-            resize_window(height)
-            resized_for_palettes = True
+        height = w_base_height + (frame_size + pady + 17)
+        resize_window(height)
         
     #- If there are no palettes
     else: 
         frame_size = 0
+        resize_window(w_base_height)
         
     palettes_frame = make_palettes_frame(row=row_index, column=0, columnspan=max_columns, padx=0, pady=(pady, 0), frame_size=frame_size)
     if frame_size == 0: delete_palettes_widget()
