@@ -888,6 +888,7 @@ if __name__ == '__main__':
 
     #- Set the current profile
     pre_selected_palette_name = get_pre_selected_palette_name()
+    print(pre_selected_palette_name)
     if not pre_selected_palette_name == "":
         selected_palette_name = pre_selected_palette_name
 
