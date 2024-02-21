@@ -50,6 +50,10 @@ selected_palette_name = None
 selected_palette_overwritten = False
 
 
+#- True for the first render
+is_startup = True
+
+
 
 ###* GUI functions
 
@@ -181,6 +185,10 @@ def create_gui():
     root.bind('<Return>', lambda _event: press_light_button(onoff_button, on_off_icons["power_button_on"], on_off_icons["power_button_off"]))
     root.bind('<space>', lambda _event: press_light_button(onoff_button, on_off_icons["power_button_on"], on_off_icons["power_button_off"]))
 
+
+    ##+ Finished generating the tkinter window
+    global is_startup
+    is_startup = False
 
     ##+ Run the tkinter window
     root.focus()
@@ -466,10 +474,10 @@ def make_palette(frame, row, column, padding, name, label_size, font, max_font_s
 
 
 def select_palette(name, box):
-    if not get_light_is_on():
-        return
+    global selected_palette_box, selected_palette_name, is_startup
     
-    global selected_palette_box, selected_palette_name
+    if not get_light_is_on() and not is_startup:
+        return
 
     #- Unclick this palette / Load paletteless profile
     if selected_palette_box == box:
@@ -888,7 +896,6 @@ if __name__ == '__main__':
 
     #- Set the current profile
     pre_selected_palette_name = get_pre_selected_palette_name()
-    print(pre_selected_palette_name)
     if not pre_selected_palette_name == "":
         selected_palette_name = pre_selected_palette_name
 
