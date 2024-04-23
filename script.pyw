@@ -57,6 +57,7 @@ is_startup = True
 
 ###* GUI functions
 
+
 def create_gui():
 
     ###* Window config
@@ -196,8 +197,6 @@ def create_gui():
 
 
 def resize_window(height):
-    #global w_height
-    #w_height = height
     root.geometry(f"{w_width}x{height}")
 
 
@@ -785,7 +784,7 @@ def color_slider_update(new_value, red, green, blue, val_label, release):
     if not release and not update_is_allowed():
         return
 
-    change_color(colormath_rgb_to_xy(red, green, blue, target_illuminant="d65")) # Best so far
+    change_color(colormath_rgb_to_xy(red, green, blue, target_illuminant="d65"))
 
 
 def bri_slider_update(new_value, val_label, release):
