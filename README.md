@@ -1,24 +1,65 @@
-# Desktop Hue lamp app
-This application provides a neat application similar to the mobile app provided for managing Hue lamps.
+# Hue lamp app
 
-### Features
+## Description
+This Python app controls a HUE lamp through the HUE Bridge API, utilizing a Tkinter GUI. 
+
+#### Features
 * Toggle lamp on/off
 * Change color and brigthness
 * Palettes
-    * Save color and brightness as a palette
-    * Remember selected palette
-    * Easy selection of palettes provided by an orderly menu
-    * Rename palette
+    * Easy selection provided by an orderly menu
+    * Save color and brightness
     * Update color and brightness
+    * Rename
     * Make copy
-    * Delete palette
-    * Fast selection of palettes
+    * Delete
+    * Remember selection
 * Additional settings in code
     * Change font
     * Change window dimensions
-    * Toggle resizable
+    * Toggle resizability
 
-### Used Icons
+
+## Installation instructions
+***Note*** This project is intended for personal use, anyone who wants to try this out 
+for themselves will have to set up their own local HUE bridge API.
+
+1. **Clone the repository**
+```
+git clone https://github.com/Benhan11/hue-lamp-app.git
+```
+
+2. **Create an authorized HUE Bridge API user and store it as a `credentials.json` file, [example](https://developers.meethue.com/develop/get-started-2/)**
+The file should look like this:
+
+```json
+{
+    "devicetype": "app_name#device_name",
+    "username": "username",
+    "ip": "192.168.x.x"
+}
+```
+
+3. **Install dependencies**
+```
+pip install pillow==9.4.0
+pip install requests==2.28.2
+pip install urllib3==1.26.14
+pip install colormath==3.0.0
+```
+
+## Usage
+Set `light_num` to its corresponding HUE Bridge number in `modules/api_interface.py`
+
+Run the executable `script.pyw`
+
+## Dependencies
+- pillow (v9.4.0)
+- requests (v2.28.2)
+- urllib3 (v1.26.14)
+- colormath (v3.0.0)
+
+## Icon attribution
 * [Iconarchive](https://iconarchive.com)
     * [Window bulb Icon](https://iconarchive.com/show/small-n-flat-icons-by-paomedia/light-bulb-icon.html)
 * [Icons8](https://icons8.com)
@@ -33,21 +74,3 @@ This application provides a neat application similar to the mobile app provided 
     * [Rename](https://www.flaticon.com/free-icon/edit_3394447?term=rename&page=1&position=10&origin=search&related_id=3394447)
     * [Confirm](https://www.flaticon.com/free-icon/check_9778609?term=confirm&page=1&position=87&origin=search&related_id=9778609)
     * [Cancel (Modified)](https://www.flaticon.com/free-icon/check_9778609?term=confirm&page=1&position=87&origin=search&related_id=9778609)
-
-
-
-### Setup
-
-
-
-#### credentials.json (in root)
-```json
-{
-    "devicetype": "app_name#device_name",
-    "username": "username",     (generated from HUE api)
-    "ip": "192.168.x.x"         (ip of the device running the app)
-}
-```
-
-#### modules/api_interface.py
-Set ```light_num``` to its corresponding Hue Bridge number
