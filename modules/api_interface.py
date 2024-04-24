@@ -107,7 +107,7 @@ def update_is_allowed():
 
 
 def make_data_file():
-    with open("data/data.json", "w") as outfile:
+    with open(data_file_path, "w") as outfile:
             json.dump({}, outfile)
 
 
