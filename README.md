@@ -29,7 +29,8 @@ for themselves will have to set up their own local HUE bridge API.
 git clone https://github.com/Benhan11/hue-lamp-app.git
 ```
 
-2. **Create an authorized HUE Bridge API user and store it as a `credentials.json` file, [example](https://developers.meethue.com/develop/get-started-2/)**
+2. **Create an authorized HUE Bridge API user and store it as a `credentials.json` file \([HUE guide](https://developers.meethue.com/develop/get-started-2/)\)**
+
 The file should look like this:
 
 ```json
