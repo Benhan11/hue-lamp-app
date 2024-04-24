@@ -1,4 +1,5 @@
 from PIL import Image, ImageTk
+import json
 
 
 
@@ -41,6 +42,8 @@ class palette_wrapper:
 
 ###* Helper functions
 
+##+ Images
+
 def get_resized_tk_images(path, image_names, size):
     resized_images = {}
     for image_name in image_names:
@@ -67,3 +70,56 @@ def get_colored_image(data, size, overlay_image):
     image.paste(overlay_image, (0, 0), overlay_image)
 
     return ImageTk.PhotoImage(image=image)
+
+
+##+ Data file structure
+
+#- Data file path
+data_file_path = 'data/data.json'
+
+
+def make_data_file():
+    with open(data_file_path, "w") as outfile:
+            json.dump({}, outfile)
+
+
+def get_data_file_dict():
+    f = open(data_file_path, "r")
+    data = json.load(f)
+    return data
+
+
+def update_data_file(data):
+    with open(data_file_path, "w") as data_file:
+        data_file.write(json.dumps(data, indent=4))
+
+
+def verify_json_data_format():
+    data_file_dict = None
+    has_selected_palette = has_saved_palettes = False
+
+    #- Check if the file exists or if the initial curcly brackets exist
+    try:
+        data_file_dict = get_data_file_dict()
+    except:
+        make_data_file()
+        data_file_dict = get_data_file_dict()
+
+    try:
+        data_file_dict["selected_palette"]
+        has_selected_palette = True
+    except:
+        has_selected_palette = False
+
+    try:
+        data_file_dict["saved_palettes"]
+        has_saved_palettes = True
+    except:
+        has_saved_palettes = False
+
+    if not has_selected_palette:
+        data_file_dict.update({"selected_palette": ""})
+    if not has_saved_palettes:
+        data_file_dict.update({"saved_palettes": {}})
+
+    update_data_file(data_file_dict)
